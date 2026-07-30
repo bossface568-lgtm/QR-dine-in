@@ -42,7 +42,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
             </div>
             <Toggle
               checked={formData.email_notifications ?? true}
-              onChange={(val) => updateField('email_notifications', val)}
+              onChange={(e) => updateField('email_notifications', e.target.checked)}
             />
           </div>
 
@@ -61,7 +61,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
             </div>
             <Toggle
               checked={formData.kitchen_alerts ?? true}
-              onChange={(val) => updateField('kitchen_alerts', val)}
+              onChange={(e) => updateField('kitchen_alerts', e.target.checked)}
             />
           </div>
 
@@ -80,7 +80,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
             </div>
             <Toggle
               checked={formData.order_alerts ?? true}
-              onChange={(val) => updateField('order_alerts', val)}
+              onChange={(e) => updateField('order_alerts', e.target.checked)}
             />
           </div>
         </div>

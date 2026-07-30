@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@qrdine/ui';
 import { restaurantService } from '@qrdine/lib';
@@ -22,6 +22,9 @@ export function useSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Keep a ref to originalData so updateField always has the latest snapshot
+  const originalRef = useRef<Partial<Restaurant>>({});
 
   // Sync form state when restaurant in AuthContext loads or updates
   useEffect(() => {
@@ -64,23 +67,18 @@ export function useSettings() {
       };
       setFormData(initial);
       setOriginalData(initial);
+      originalRef.current = initial;
       setIsDirty(false);
       setErrors({});
     }
   }, [restaurant]);
 
-  // Check dirty state against originalData
-  const checkDirty = (current: Partial<Restaurant>, original: Partial<Restaurant>) => {
-    return JSON.stringify(current) !== JSON.stringify(original);
-  };
-
   const updateField = useCallback((key: keyof Restaurant, value: any) => {
     setFormData(prev => {
       const next = { ...prev, [key]: value };
-      setOriginalData(orig => {
-        setIsDirty(checkDirty(next, orig));
-        return orig;
-      });
+      // Compare against ref (always fresh) to determine dirty state
+      const dirty = JSON.stringify(next) !== JSON.stringify(originalRef.current);
+      setIsDirty(dirty);
       return next;
     });
 
@@ -192,7 +190,9 @@ export function useSettings() {
         return false;
       }
 
-      setOriginalData({ ...formData });
+      const snapshot = { ...formData };
+      setOriginalData(snapshot);
+      originalRef.current = snapshot;
       setIsDirty(false);
       toast('Restaurant settings saved successfully!', 'success');
       await refreshAuth();
@@ -206,11 +206,11 @@ export function useSettings() {
   };
 
   const resetSettings = useCallback(() => {
-    setFormData({ ...originalData });
+    setFormData({ ...originalRef.current });
     setIsDirty(false);
     setErrors({});
     toast('Settings reset to last saved values.', 'info');
-  }, [originalData, toast]);
+  }, [toast]);
 
   return {
     formData,

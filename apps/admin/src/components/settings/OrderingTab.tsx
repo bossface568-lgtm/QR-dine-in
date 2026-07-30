@@ -42,7 +42,7 @@ export const OrderingTab: React.FC<OrderingTabProps> = ({
             </div>
             <Toggle
               checked={formData.accept_orders ?? true}
-              onChange={(val) => updateField('accept_orders', val)}
+              onChange={(e) => updateField('accept_orders', e.target.checked)}
             />
           </div>
 
@@ -61,7 +61,7 @@ export const OrderingTab: React.FC<OrderingTabProps> = ({
             </div>
             <Toggle
               checked={formData.enable_table_ordering ?? true}
-              onChange={(val) => updateField('enable_table_ordering', val)}
+              onChange={(e) => updateField('enable_table_ordering', e.target.checked)}
             />
           </div>
 
@@ -80,7 +80,7 @@ export const OrderingTab: React.FC<OrderingTabProps> = ({
             </div>
             <Toggle
               checked={formData.kitchen_display_enabled ?? true}
-              onChange={(val) => updateField('kitchen_display_enabled', val)}
+              onChange={(e) => updateField('kitchen_display_enabled', e.target.checked)}
             />
           </div>
         </div>
