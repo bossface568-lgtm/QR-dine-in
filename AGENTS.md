@@ -156,3 +156,215 @@ Key patterns:
 - Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
 - For storage uploads, persist both the returned `url` and `key`.
 <!-- INSFORGE:END -->
+
+## GitHub Collaboration & Development Workflow
+
+This document is shared between BOTH developers and must become the single source of truth for how development is performed across the QR Dine SaaS platform.
+
+### Project Structure & Ownership
+
+This project is developed by TWO developers using ONE GitHub repository and ONE shared InsForge backend.
+
+#### Developer A (Technical Architect)
+**Owns:**
+- Backend Architecture
+- Database Schema
+- Database Migrations
+- Object Storage
+- Security Policies
+- Authentication
+- Admin Panel
+- Kitchen Display
+- Analytics
+- AI
+- Billing
+- Subscriptions
+- Restaurant Management
+- Categories
+- Menu
+- Variants
+- Modifiers
+- Tables
+- QR Codes
+- APIs
+- Shared Business Logic
+
+#### Developer B
+**Owns ONLY:**
+- Customer Application (`apps/customer`)
+- Customer UI
+- Customer UX
+- Customer Cart
+- Customer Checkout UI
+- Customer Order Tracking UI
+- Customer Animations
+- Customer Responsive Design
+
+> [!IMPORTANT]
+> Developer B must never redesign or restructure backend architecture.
+
+---
+
+### GitHub Repository Rules
+
+- There is **ONLY ONE** GitHub repository.
+- Nobody should exchange ZIP files.
+- Nobody should manually copy project folders.
+- All collaboration must happen through Git.
+- Both developers clone the repository only once.
+- All future updates must happen using `git pull` and `git push`.
+
+---
+
+### Branch Strategy
+
+Repository structure:
+
+`main`  
+└─ `develop`  
+&nbsp;&nbsp;&nbsp;&nbsp;├─ `admin-dev`  
+&nbsp;&nbsp;&nbsp;&nbsp;└─ `customer-dev`  
+
+**Rules:**
+- **`main`**: Production-ready code only.
+- **`develop`**: Integrated and tested features only.
+- **`admin-dev`**: Only Developer A works here.
+- **`customer-dev`**: Only Developer B works here.
+- **Never commit directly to `main`**.
+- **Never commit directly to `develop`**.
+
+---
+
+### File Ownership
+
+**Developer A owns:**
+- `apps/admin`
+- `apps/kitchen`
+- `database` / `insforge`
+- `migrations`
+- `backend`
+- `storage`
+- `api`
+- `security`
+
+**Developer B owns:**
+- `apps/customer`
+
+**Shared folders:**
+- `packages` (`@qrdine/types`, `@qrdine/lib`, `@qrdine/shared`, `@qrdine/ui`)
+- `docs`
+
+> [!CAUTION]
+> Changes to shared folders require agreement from both developers.
+
+---
+
+### Backend Ownership & Restrictions
+
+Developer B must **NEVER**:
+- Create new database tables.
+- Modify schema.
+- Rename tables.
+- Delete columns.
+- Create migrations.
+- Modify storage buckets.
+- Change authentication.
+- Change security policies.
+
+*If backend changes are required, Developer B should document the requirement instead of implementing it.*
+
+---
+
+### Daily Workflow
+
+Every development session must follow this order:
+
+1. **Step 1**: Pull latest changes from the assigned branch (`git pull`).
+2. **Step 2**: Implement only the assigned module.
+3. **Step 3**: Run project checks (`npm run typecheck` / build).
+4. **Step 4**: Verify no unrelated files were modified.
+5. **Step 5**: Commit with meaningful commit messages.
+6. **Step 6**: Push to the assigned branch (`git push`).
+
+---
+
+### Commit Message Format
+
+Use clear, standardized commit messages following Conventional Commits syntax:
+
+**Examples:**
+- `feat(admin): add category management`
+- `feat(customer): build menu page`
+- `fix(admin): resolve onboarding validation`
+- `fix(customer): improve menu loading`
+- `docs: update AGENT.md`
+- `refactor(admin): extract media service`
+
+**Avoid generic commit messages such as:**
+`update`, `changes`, `fix`, `work`
+
+---
+
+### Pull Request Rules
+
+Every completed feature must be submitted using a Pull Request (PR).
+
+Pull Request descriptions must include:
+- **Summary**
+- **Files Changed**
+- **Database Changes**
+- **API Changes**
+- **Breaking Changes**
+- **Testing Completed**
+- **Known Limitations**
+
+*Developer A reviews all backend-related changes.*
+
+---
+
+### Conflict Prevention Rules
+
+- Never edit another developer's feature without discussion.
+- Never rename shared files without approval.
+- Never move shared folders.
+- Never duplicate existing utilities.
+- Always inspect existing code before creating new components.
+
+---
+
+### Documentation Requirements
+
+Whenever a feature is completed, update documentation in `docs/` covering:
+- New routes
+- New APIs
+- New components
+- Database changes
+- Storage changes
+- Configuration changes
+- Future extension points
+
+---
+
+### Quality Rules
+
+Before committing, ensure:
+- Project builds successfully (`npm run build`).
+- No lint errors.
+- No type errors (`npx tsc --noEmit`).
+- No console errors.
+- No duplicated code.
+- No dead code.
+- Documentation updated.
+
+---
+
+### AI Agent Rules
+
+Whenever you receive a new prompt:
+1. Read `AGENTS.md` first.
+2. Respect file ownership.
+3. Never generate duplicate architecture.
+4. Never replace existing implementations.
+5. Always extend the current project.
+6. If a requested change belongs to the other developer's ownership, stop and explain why instead of making the change.
+
