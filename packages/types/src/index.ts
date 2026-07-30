@@ -14,7 +14,72 @@ export interface Restaurant {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+
+  // Additional Settings Fields (Migration 014)
+  description?: string | null;
+  cover_image_url?: string | null;
+  website?: string | null;
+  pan_number?: string | null;
+  business_registration?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
+  opening_time?: string | null;
+  closing_time?: string | null;
+  business_days?: string[] | null;
+  business_address?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+  language?: string | null;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  accept_orders?: boolean;
+  enable_table_ordering?: boolean;
+  kitchen_display_enabled?: boolean;
+  email_notifications?: boolean;
+  kitchen_alerts?: boolean;
+  order_alerts?: boolean;
+  settings_json?: Record<string, any> | null;
 }
+
+export interface UpdateRestaurantSettingsPayload {
+  name?: string;
+  slug?: string;
+  restaurant_type?: string | null;
+  description?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  logo_url?: string | null;
+  cover_image_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
+  gst_number?: string | null;
+  pan_number?: string | null;
+  business_registration?: string | null;
+  opening_time?: string | null;
+  closing_time?: string | null;
+  business_days?: string[] | null;
+  business_address?: string | null;
+  currency?: string;
+  timezone?: string;
+  date_format?: string | null;
+  time_format?: string | null;
+  language?: string | null;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  accept_orders?: boolean;
+  enable_table_ordering?: boolean;
+  kitchen_display_enabled?: boolean;
+  email_notifications?: boolean;
+  kitchen_alerts?: boolean;
+  order_alerts?: boolean;
+  settings_json?: Record<string, any> | null;
+}
+
 
 // Roles (RBAC definition)
 export interface Role {

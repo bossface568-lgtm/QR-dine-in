@@ -74,6 +74,43 @@ export const restaurantService = {
     }
   },
 
+  async checkSlugAvailable(slug: string, excludeRestaurantId?: string): Promise<ApiResponse<boolean>> {
+    try {
+      let query = insforge.database
+        .from('restaurants')
+        .select('id')
+        .eq('slug', slug);
+
+      if (excludeRestaurantId) {
+        query = query.neq('id', excludeRestaurantId);
+      }
+
+      const { data, error } = await query.limit(1);
+
+      if (error) throw error;
+      // Returns true if available (i.e. no existing record found)
+      return { data: !(data && data.length > 0), error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message || 'Failed to check slug availability' } };
+    }
+  },
+
+  async updateRestaurantSettings(id: string, payload: Partial<Restaurant>): Promise<ApiResponse<Restaurant>> {
+    try {
+      const { data, error } = await insforge.database
+        .from('restaurants')
+        .update(payload)
+        .eq('id', id)
+        .select();
+
+      if (error) throw error;
+      return { data: data && data.length > 0 ? data[0] : null, error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message || 'Failed to update restaurant settings' } };
+    }
+  },
+
+
   async getRestaurantUser(authUserId: string): Promise<ApiResponse<RestaurantUser & { restaurant: Restaurant }>> {
     try {
       const { data, error } = await insforge.database

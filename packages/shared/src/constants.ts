@@ -83,3 +83,56 @@ export const ROLE_PERMISSIONS: Record<StaffRole, string[]> = {
     'order.read', 'order.write'
   ]
 };
+
+// Restaurant Settings Constants
+export const RESTAURANT_TYPES = [
+  { value: 'fine_dining', label: 'Fine Dining' },
+  { value: 'casual_dining', label: 'Casual Dining' },
+  { value: 'fast_food', label: 'Fast Food / QSR' },
+  { value: 'cafe', label: 'Café & Bakery' },
+  { value: 'buffet', label: 'Buffet' },
+  { value: 'food_court', label: 'Food Court Stall' },
+  { value: 'bar_pub', label: 'Bar & Lounge' },
+  { value: 'cloud_kitchen', label: 'Cloud Kitchen' },
+];
+
+export const SUPPORTED_CURRENCIES = [
+  { value: 'INR', label: 'INR (₹) - Indian Rupee' },
+  { value: 'USD', label: 'USD ($) - US Dollar' },
+  { value: 'EUR', label: 'EUR (€) - Euro' },
+  { value: 'GBP', label: 'GBP (£) - British Pound' },
+  { value: 'AED', label: 'AED (د.إ) - UAE Dirham' },
+  { value: 'SGD', label: 'SGD ($) - Singapore Dollar' },
+];
+
+export const SUPPORTED_TIMEZONES = [
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST - UTC+05:30)' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (GST - UTC+04:00)' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT - UTC+08:00)' },
+  { value: 'Europe/London', label: 'Europe/London (GMT/BST - UTC+00:00)' },
+  { value: 'America/New_York', label: 'America/New_York (EST - UTC-05:00)' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (PST - UTC-08:00)' },
+];
+
+export const DATE_FORMATS = [
+  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (31/12/2026)' },
+  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (12/31/2026)' },
+  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (2026-12-31)' },
+  { value: 'DD MMM YYYY', label: 'DD MMM YYYY (31 Dec 2026)' },
+];
+
+export const TIME_FORMATS = [
+  { value: '12h', label: '12-Hour (02:30 PM)' },
+  { value: '24h', label: '24-Hour (14:30)' },
+];
+
+export const SUPPORTED_LANGUAGES = [
+  { value: 'en', label: 'English' },
+  { value: 'hi', label: 'Hindi (हिंदी)' },
+  { value: 'es', label: 'Spanish (Español)' },
+  { value: 'fr', label: 'French (Français)' },
+  { value: 'ar', label: 'Arabic (العربية)' },
+];
+
+export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
