@@ -207,11 +207,12 @@ This project is developed by TWO developers using ONE GitHub repository and ONE 
 
 ### GitHub Repository Rules
 
-- There is **ONLY ONE** GitHub repository.
+- There is **ONLY ONE** GitHub repository: **`git@github.com:bossface568-lgtm/QR-dine-in.git`** (`https://github.com/bossface568-lgtm/QR-dine-in.git`).
+- Both developers push to and pull from this exact repository.
 - Nobody should exchange ZIP files.
 - Nobody should manually copy project folders.
 - All collaboration must happen through Git.
-- Both developers clone the repository only once.
+- Both developers clone this repository only once.
 - All future updates must happen using `git pull` and `git push`.
 
 ---
