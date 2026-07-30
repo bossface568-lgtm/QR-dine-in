@@ -346,11 +346,17 @@ export interface MediaAsset {
 
 export interface MediaPresetConfig {
   entityType: MediaType;
-  maxSizeBytes: number;
+  maxInputSizeBytes: number;        // Max accepted input size (50MB default)
   allowedMimeTypes: string[];
-  targetQuality: number; // e.g. 0.82 for 82%
-  maxWidth?: number;
-  maxHeight?: number;
+  targetQuality: number;            // Starting quality for adaptive loop (e.g. 0.85)
+  targetSizeRange: {                // Adaptive compression target range in bytes
+    min: number;
+    max: number;
+  };
+  dimensions: {                     // Target output dimensions
+    width: number;
+    height: number;
+  };
   variants: ImageVariant[];
 }
 

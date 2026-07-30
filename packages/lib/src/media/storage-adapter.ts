@@ -12,14 +12,11 @@ export interface IStorageAdapter {
 
 /**
  * InsForge Storage Adapter implementation
+ * 
+ * SDK upload() returns: { data: { url, key, bucket, size, uploadedAt, mimeType? }, error }
+ * SDK getPublicUrl(key) returns: { data: { publicUrl } }
  */
 export class InsForgeStorageAdapter implements IStorageAdapter {
-  private baseUrl: string;
-
-  constructor() {
-    this.baseUrl = (import.meta as any).env?.VITE_INSFORGE_URL || 'https://vy3qe8cs.ap-southeast.insforge.app';
-  }
-
   async upload(bucket: string, path: string, content: Blob | File): Promise<{ url: string; path: string }> {
     const fileToUpload = content instanceof File 
       ? content 
@@ -33,8 +30,9 @@ export class InsForgeStorageAdapter implements IStorageAdapter {
       throw new Error(`Storage upload failed for ${path}: ${error.message}`);
     }
 
-    const publicUrl = (data as any)?.url || `${this.baseUrl}/storage/v1/object/public/${bucket}/${path}`;
-    const storagePath = (data as any)?.path || path;
+    // SDK returns { url, key, bucket, size, uploadedAt, mimeType? }
+    const publicUrl = data?.url || '';
+    const storagePath = data?.key || path;
 
     return {
       url: publicUrl,
@@ -77,7 +75,10 @@ export class InsForgeStorageAdapter implements IStorageAdapter {
   getPublicUrl(bucket: string, path: string): string {
     if (!path) return '';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `${this.baseUrl}/storage/v1/object/public/${bucket}/${path}`;
+
+    // Use SDK's getPublicUrl which returns { data: { publicUrl } }
+    const { data } = insforge.storage.from(bucket).getPublicUrl(path);
+    return data?.publicUrl || '';
   }
 }
 

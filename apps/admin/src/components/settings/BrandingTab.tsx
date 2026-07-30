@@ -45,7 +45,7 @@ export const BrandingTab: React.FC<BrandingTabProps> = ({
               currentImageUrl={formData.logo_url}
               onUploadSuccess={(res) => updateField('logo_url', res.urls.originalUrl)}
               onRemove={() => updateField('logo_url', null)}
-              label="Upload Logo (PNG/WebP, max 5MB)"
+              label="Restaurant Logo"
             />
           </div>
 
@@ -60,7 +60,7 @@ export const BrandingTab: React.FC<BrandingTabProps> = ({
               currentImageUrl={formData.cover_image_url}
               onUploadSuccess={(res) => updateField('cover_image_url', res.urls.originalUrl)}
               onRemove={() => updateField('cover_image_url', null)}
-              label="Upload Cover Image (Landscape, max 5MB)"
+              label="Cover Banner"
             />
           </div>
         </div>
