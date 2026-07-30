@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Category, CreateCategoryPayload, UpdateCategoryPayload } from '@qrdine/types';
-import { Modal, Button, Input, Toggle, Spinner } from '@qrdine/ui';
-import { X, Image as ImageIcon } from 'lucide-react';
+import { Category, CreateCategoryPayload, UpdateCategoryPayload, Branch } from '@qrdine/types';
+import { Modal, Button, Input, Toggle, MediaUploader } from '@qrdine/ui';
+import { useAuth } from '../../contexts/AuthContext';
+import { branchService, categoryService } from '@qrdine/lib';
+import { generateSlug } from '@qrdine/shared';
+import { Building2, Sparkles } from 'lucide-react';
 
 interface CategoryFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateCategoryPayload | UpdateCategoryPayload) => Promise<boolean>;
-  onUploadImage: (file: File) => Promise<{ url: string; key: string } | null>;
   category?: Category | null;
 }
 
@@ -17,73 +19,89 @@ export function CategoryFormModal({
   isOpen,
   onClose,
   onSubmit,
-  onUploadImage,
   category
 }: CategoryFormModalProps) {
+  const { restaurantId } = useAuth();
   const isEdit = !!category;
   
   const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [isSlugCustomized, setIsSlugCustomized] = useState(false);
+  const [slugError, setSlugError] = useState<string | null>(null);
+  
   const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [icon, setIcon] = useState('');
   const [bgColor, setBgColor] = useState('#1e293b');
   const [textColor, setTextColor] = useState('#ffffff');
   const [isVisible, setIsVisible] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [branchId, setBranchId] = useState<string>('');
   const [availableFrom, setAvailableFrom] = useState('');
   const [availableUntil, setAvailableUntil] = useState('');
-  const [availableDays, setAvailableDays] = useState<string[]>([]);
+  const [availableDays, setAvailableDays] = useState<string[]>(DAYS_OF_WEEK);
   
-  const [isUploading, setIsUploading] = useState(false);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch branches for multi-branch assignment
+  useEffect(() => {
+    if (isOpen && restaurantId) {
+      branchService.getBranches(restaurantId).then(res => {
+        if (res.data) setBranches(res.data);
+      });
+    }
+  }, [isOpen, restaurantId]);
 
   useEffect(() => {
     if (isOpen) {
       if (category) {
         setName(category.name || '');
+        setSlug(category.slug || '');
+        setIsSlugCustomized(true);
         setDescription(category.description || '');
-        setImageUrl(category.image_url || '');
+        setImageUrl(category.image_url || null);
         setIcon(category.icon || '');
         setBgColor(category.bg_color || '#1e293b');
         setTextColor(category.text_color || '#ffffff');
         setIsVisible(category.is_visible ?? true);
         setIsFeatured(category.is_featured ?? false);
+        setBranchId(category.branch_id || '');
         setAvailableFrom(category.available_from || '');
         setAvailableUntil(category.available_until || '');
-        setAvailableDays(category.available_days || []);
+        setAvailableDays(category.available_days || DAYS_OF_WEEK);
       } else {
         setName('');
+        setSlug('');
+        setIsSlugCustomized(false);
+        setSlugError(null);
         setDescription('');
-        setImageUrl('');
+        setImageUrl(null);
         setIcon('');
         setBgColor('#1e293b');
         setTextColor('#ffffff');
         setIsVisible(true);
         setIsFeatured(false);
+        setBranchId('');
         setAvailableFrom('');
         setAvailableUntil('');
-        setAvailableDays([]);
+        setAvailableDays(DAYS_OF_WEEK);
       }
     }
   }, [isOpen, category]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setIsUploading(true);
-    try {
-      const result = await onUploadImage(file);
-      if (result) {
-        setImageUrl(result.url);
-      }
-    } finally {
-      setIsUploading(false);
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    if (!isSlugCustomized) {
+      setSlug(generateSlug(val));
     }
   };
 
-  const handleRemoveImage = () => {
-    setImageUrl('');
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setIsSlugCustomized(true);
+    setSlugError(null);
   };
 
   const handleDayToggle = (day: string) => {
@@ -96,18 +114,29 @@ export function CategoryFormModal({
     e.preventDefault();
     if (!name.trim()) return;
 
+    // Validate slug uniqueness
+    if (restaurantId && slug.trim()) {
+      const check = await categoryService.checkSlugAvailable(restaurantId, slug.trim(), category?.id);
+      if (check.error || !check.data) {
+        setSlugError('This slug is already in use by another category.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const payload: any = {
-        name,
-        description,
+        name: name.trim(),
+        slug: slug.trim() || generateSlug(name),
+        description: description.trim(),
         image_url: imageUrl,
-        icon,
+        icon: icon.trim(),
         bg_color: bgColor,
         text_color: textColor,
         is_visible: isVisible,
         is_active: isVisible,
         is_featured: isFeatured,
+        branch_id: branchId || null,
         available_from: availableFrom || null,
         available_until: availableUntil || null,
         available_days: availableDays,
@@ -126,15 +155,25 @@ export function CategoryFormModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg" title={isEdit ? "Edit Category" : "Create Category"}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Left Column: Basic Information */}
           <div className="space-y-4">
             <Input 
-              label="Name" 
+              label="Category Name *" 
               value={name} 
-              onChange={e => setName(e.target.value)} 
+              onChange={handleNameChange} 
               required 
-              placeholder="e.g. Main Course"
+              placeholder="e.g. Gourmet Burgers, Beverages"
+            />
+
+            <Input 
+              label="URL Slug (Identifier)" 
+              value={slug} 
+              onChange={handleSlugChange} 
+              placeholder="gourmet-burgers"
+              error={slugError || undefined}
+              helperText="Auto-generated from category name. Unique identifier for QR menu URLs."
             />
             
             <Input 
@@ -142,88 +181,113 @@ export function CategoryFormModal({
               label="Description" 
               value={description} 
               onChange={e => setDescription(e.target.value)} 
-              placeholder="Brief description of the category"
+              placeholder="Provide a brief description for customers..."
               rows={3}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Branch Assignment */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-orange-400" />
+                Branch Visibility
+              </label>
+              <select
+                value={branchId}
+                onChange={e => setBranchId(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-800 text-slate-100 rounded-lg py-2 px-3 text-sm focus:border-orange-500 focus:outline-none"
+              >
+                <option value="">All Branches (Global Category)</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} {b.is_default ? '(Primary)' : ''}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-slate-500">
+                Select specific branch or make visible across all locations.
+              </span>
+            </div>
+
+            {/* Icon & Color Styling */}
+            <div className="grid grid-cols-2 gap-4 pt-2">
               <Input 
-                label="Icon (Emoji)" 
+                label="Display Icon (Emoji)" 
                 value={icon} 
                 onChange={e => setIcon(e.target.value)} 
                 placeholder="🍔"
               />
-              <div className="flex gap-4">
-                <div className="flex flex-col gap-1.5 flex-1">
-                  <label className="text-sm font-medium text-slate-300">Bg Color</label>
-                  <input 
-                    type="color" 
-                    value={bgColor} 
-                    onChange={e => setBgColor(e.target.value)}
-                    className="h-10 w-full rounded border border-slate-700 bg-slate-900/50 cursor-pointer"
-                  />
+              <div className="flex gap-3">
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Card Bg</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="color" 
+                      value={bgColor} 
+                      onChange={e => setBgColor(e.target.value)}
+                      className="h-9 w-9 rounded-lg border-0 bg-transparent cursor-pointer"
+                    />
+                    <span className="text-xs font-mono text-slate-400">{bgColor}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1.5 flex-1">
-                  <label className="text-sm font-medium text-slate-300">Text Color</label>
-                  <input 
-                    type="color" 
-                    value={textColor} 
-                    onChange={e => setTextColor(e.target.value)}
-                    className="h-10 w-full rounded border border-slate-700 bg-slate-900/50 cursor-pointer"
-                  />
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Text Color</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="color" 
+                      value={textColor} 
+                      onChange={e => setTextColor(e.target.value)}
+                      className="h-9 w-9 rounded-lg border-0 bg-transparent cursor-pointer"
+                    />
+                    <span className="text-xs font-mono text-slate-400">{textColor}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Right Column: Display Image & Status */}
           <div className="space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-300">Image</label>
-              {imageUrl ? (
-                <div className="relative h-32 rounded-lg border border-slate-700 overflow-hidden group">
-                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button type="button" variant="danger" size="sm" onClick={handleRemoveImage}>
-                      <X className="w-4 h-4 mr-1" /> Remove
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative h-32 rounded-lg border-2 border-dashed border-slate-700 flex flex-col items-center justify-center bg-slate-900/50 text-slate-400 hover:border-orange-500/50 hover:bg-slate-800/50 transition-colors">
-                  {isUploading ? (
-                    <Spinner size="md" className="text-orange-500" />
-                  ) : (
-                    <>
-                      <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                      <span className="text-xs font-medium">Click to upload</span>
-                    </>
-                  )}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleFileChange} 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                    disabled={isUploading}
-                  />
-                </div>
-              )}
-            </div>
+            {/* Category Image Uploader (Shared Media Service) */}
+            <MediaUploader
+              restaurantId={restaurantId || ''}
+              entityType="category"
+              currentImageUrl={imageUrl}
+              onUploadSuccess={(res) => setImageUrl(res.urls.originalUrl)}
+              onRemove={() => setImageUrl(null)}
+              label="Display Image"
+            />
 
-            <div className="space-y-4 p-4 rounded-lg bg-slate-900/50 border border-slate-800">
+            {/* Toggles */}
+            <div className="space-y-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-300">Visibility</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-200">Active & Visible</span>
+                  <span className="text-xs text-slate-500">Show this category on customer menus</span>
+                </div>
                 <Toggle checked={isVisible} onChange={e => setIsVisible(e.target.checked)} />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-300">Featured</span>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    Featured Category
+                  </span>
+                  <span className="text-xs text-slate-500">Highlight at top of digital menu</span>
+                </div>
                 <Toggle checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)} />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="p-4 rounded-lg bg-slate-900/50 border border-slate-800 space-y-4">
-          <h4 className="text-sm font-medium text-slate-300 border-b border-slate-800 pb-2">Availability Schedule (Optional)</h4>
+        {/* Availability Schedule Section */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Availability Schedule & Day Restrictions (Optional)
+            </h4>
+            <span className="text-xs text-slate-500">e.g. Breakfast only (7AM - 11AM)</span>
+          </div>
           
           <div className="grid grid-cols-2 gap-4">
             <Input 
@@ -241,27 +305,33 @@ export function CategoryFormModal({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-300">Available Days</label>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Available Days of Week
+            </label>
             <div className="flex flex-wrap gap-2">
-              {DAYS_OF_WEEK.map(day => (
-                <button
-                  type="button"
-                  key={day}
-                  onClick={() => handleDayToggle(day)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
-                    availableDays.includes(day)
-                      ? 'bg-orange-500 text-white border-orange-600'
-                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'
-                  }`}
-                >
-                  {day}
-                </button>
-              ))}
+              {DAYS_OF_WEEK.map(day => {
+                const isSelected = availableDays.includes(day);
+                return (
+                  <button
+                    type="button"
+                    key={day}
+                    onClick={() => handleDayToggle(day)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                      isSelected
+                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/40 shadow-sm'
+                        : 'bg-slate-950 text-slate-500 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-800 mt-2">
+        {/* Modal Actions */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>

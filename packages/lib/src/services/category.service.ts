@@ -47,11 +47,36 @@ export const categoryService = {
     }
   },
 
+  async checkSlugAvailable(restaurantId: string, slug: string, categoryId?: string): Promise<ApiResponse<boolean>> {
+    try {
+      let query = insforge
+        .database
+        .from('menu_categories')
+        .select('id')
+        .eq('restaurant_id', restaurantId)
+        .eq('slug', slug.trim());
+
+      if (categoryId) {
+        query = query.neq('id', categoryId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const exists = Array.isArray(data) && data.length > 0;
+      return { data: !exists, error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message } };
+    }
+  },
+
   async createCategory(restaurantId: string, userId: string, payload: CreateCategoryPayload): Promise<ApiResponse<Category>> {
     try {
-      let slug = payload.slug;
-      if (!slug) {
-        slug = generateSlug(payload.name);
+      let slug = payload.slug ? payload.slug.trim() : generateSlug(payload.name);
+      
+      // Ensure slug uniqueness for restaurant tenant
+      const slugCheck = await this.checkSlugAvailable(restaurantId, slug);
+      if (!slugCheck.data) {
         const suffix = Math.random().toString(36).substring(2, 6);
         slug = `${slug}-${suffix}`;
       }
@@ -73,10 +98,10 @@ export const categoryService = {
       const insertRecord: Record<string, any> = {
         restaurant_id: restaurantId,
         created_by: userId,
-        name: payload.name,
+        name: payload.name.trim(),
         slug,
         sort_order,
-        description: payload.description || null,
+        description: payload.description ? payload.description.trim() : null,
         image_url: payload.image_url || null,
         icon: payload.icon || null,
         bg_color: payload.bg_color || '#1e293b',
@@ -114,9 +139,9 @@ export const categoryService = {
         updated_at: new Date().toISOString(),
       };
 
-      if (payload.name !== undefined) updateRecord.name = payload.name;
-      if (payload.slug !== undefined) updateRecord.slug = payload.slug;
-      if (payload.description !== undefined) updateRecord.description = payload.description;
+      if (payload.name !== undefined) updateRecord.name = payload.name.trim();
+      if (payload.slug !== undefined) updateRecord.slug = payload.slug.trim();
+      if (payload.description !== undefined) updateRecord.description = payload.description ? payload.description.trim() : null;
       if (payload.image_url !== undefined) updateRecord.image_url = payload.image_url;
       if (payload.icon !== undefined) updateRecord.icon = payload.icon;
       if (payload.bg_color !== undefined) updateRecord.bg_color = payload.bg_color;
@@ -303,21 +328,46 @@ export const categoryService = {
     }
   },
 
-  async uploadCategoryImage(file: File): Promise<ApiResponse<{ url: string; key: string }>> {
+  async bulkArchiveCategories(restaurantId: string, categoryIds: string[]): Promise<ApiResponse<boolean>> {
     try {
-      const path = `categories/${Date.now()}_${file.name}`;
-      
-      const { data, error } = await insforge
-        .storage
-        .from('menu-images')
-        .upload(path, file);
+      if (!categoryIds.length) return { data: true, error: null };
 
-      if (error) throw error;
-      
-      const url = (data as any)?.url || `https://vy3qe8cs.ap-southeast.insforge.app/storage/v1/object/public/menu-images/${path}`;
-      const key = (data as any)?.path || path;
-      
-      return { data: { url, key }, error: null };
+      for (const id of categoryIds) {
+        const { error } = await insforge
+          .database
+          .from('menu_categories')
+          .update({
+            archived_at: new Date().toISOString(),
+            is_active: false
+          })
+          .eq('restaurant_id', restaurantId)
+          .eq('id', id);
+
+        if (error) throw error;
+      }
+
+      return { data: true, error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message } };
+    }
+  },
+
+  async bulkToggleStatus(restaurantId: string, categoryIds: string[], isActive: boolean): Promise<ApiResponse<boolean>> {
+    try {
+      if (!categoryIds.length) return { data: true, error: null };
+
+      for (const id of categoryIds) {
+        const { error } = await insforge
+          .database
+          .from('menu_categories')
+          .update({ is_active: isActive })
+          .eq('restaurant_id', restaurantId)
+          .eq('id', id);
+
+        if (error) throw error;
+      }
+
+      return { data: true, error: null };
     } catch (err: any) {
       return { data: null, error: { message: err.message } };
     }

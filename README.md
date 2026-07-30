@@ -212,9 +212,10 @@ npm --prefix apps/admin run build
 - Branch Management Engine
 - Adaptive WebP Media Processing Pipeline
 - Restaurant Settings Module (7 Tabs: General, Branding, Business, Regional, Ordering, Notifications, Integrations)
+- Category Management Module
 
 ### Developer A Roadmap (Admin & Backend)
-- [x] Category Management Foundation
+- [x] Category Management Module
 - [ ] Menu Item CRUD & Pricing Engine
 - [ ] Modifier Groups & Product Variants
 - [ ] Table Layout Grid & QR Code Generator

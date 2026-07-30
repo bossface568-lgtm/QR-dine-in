@@ -378,9 +378,11 @@ Pull Request descriptions must include:
   - Branch Management Module
   - Media Foundation & Adaptive WebP Processor
   - Restaurant Settings Module (7 Tabs: General, Branding, Business, Regional, Ordering, Notifications, Integrations)
+  - Category Management Module
 - **Current Development**:
-  - Category Management
+  - Menu Management Module
 - **Upcoming Modules (Developer A)**:
+  - Menu Management & Items CRUD
   - Menu Management
   - Modifier Groups
   - Variants

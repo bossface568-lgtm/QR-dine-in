@@ -5,13 +5,15 @@ import { Category, CreateCategoryPayload, UpdateCategoryPayload, CategoryFilterT
 import { useToast } from '@qrdine/ui';
 
 export function useCategories() {
-  const { restaurantId, user, refreshAuth } = useAuth();
+  const { restaurantId, user } = useAuth();
   const { toast } = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<CategoryFilterType>('all');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all');
 
   const fetchCategories = useCallback(async () => {
     if (!restaurantId) {
@@ -22,7 +24,8 @@ export function useCategories() {
 
     setLoading(true);
     try {
-      const res = await categoryService.getCategories(restaurantId, undefined, true);
+      const branchIdParam = selectedBranchFilter !== 'all' ? selectedBranchFilter : undefined;
+      const res = await categoryService.getCategories(restaurantId, branchIdParam, true);
       if (res.error) {
         toast(res.error.message, 'error');
       } else if (res.data) {
@@ -33,7 +36,7 @@ export function useCategories() {
     } finally {
       setLoading(false);
     }
-  }, [restaurantId, toast]);
+  }, [restaurantId, selectedBranchFilter, toast]);
 
   useEffect(() => {
     fetchCategories();
@@ -74,7 +77,7 @@ export function useCategories() {
     }
 
     // 3. Sort by sort_order ascending
-    return result.sort((a, b) => a.sort_order - b.sort_order);
+    return result.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   }, [categories, filter, searchTerm]);
 
   const stats = useMemo(() => {
@@ -136,6 +139,7 @@ export function useCategories() {
         return false;
       }
       toast('Category archived successfully!', 'success');
+      setSelectedIds(prev => prev.filter(i => i !== id));
       await fetchCategories();
       return true;
     } catch (err: any) {
@@ -229,18 +233,55 @@ export function useCategories() {
     }
   };
 
-  const uploadImage = async (file: File): Promise<{ url: string; key: string } | null> => {
+  const bulkArchive = async (): Promise<boolean> => {
+    if (!restaurantId || !selectedIds.length) return false;
     try {
-      const res = await categoryService.uploadCategoryImage(file);
+      const res = await categoryService.bulkArchiveCategories(restaurantId, selectedIds);
       if (res.error) {
         toast(res.error.message, 'error');
-        return null;
+        return false;
       }
-      return res.data;
+      toast(`${selectedIds.length} categories archived successfully!`, 'success');
+      setSelectedIds([]);
+      await fetchCategories();
+      return true;
     } catch (err: any) {
-      toast(err.message || 'Failed to upload category image', 'error');
-      return null;
+      toast(err.message || 'Failed to bulk archive categories', 'error');
+      return false;
     }
+  };
+
+  const bulkToggleStatus = async (isActive: boolean): Promise<boolean> => {
+    if (!restaurantId || !selectedIds.length) return false;
+    try {
+      const res = await categoryService.bulkToggleStatus(restaurantId, selectedIds, isActive);
+      if (res.error) {
+        toast(res.error.message, 'error');
+        return false;
+      }
+      toast(`${selectedIds.length} categories ${isActive ? 'activated' : 'deactivated'}!`, 'success');
+      setSelectedIds([]);
+      await fetchCategories();
+      return true;
+    } catch (err: any) {
+      toast(err.message || 'Failed to update categories status', 'error');
+      return false;
+    }
+  };
+
+  const toggleSelectAll = () => {
+    const allFilteredIds = filteredCategories.map(c => c.id);
+    if (selectedIds.length === allFilteredIds.length && allFilteredIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(allFilteredIds);
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   return {
@@ -252,6 +293,12 @@ export function useCategories() {
     setSearchTerm,
     filter,
     setFilter,
+    selectedIds,
+    setSelectedIds,
+    selectedBranchFilter,
+    setSelectedBranchFilter,
+    toggleSelectAll,
+    toggleSelectOne,
     refreshCategories: fetchCategories,
     createCategory,
     updateCategory,
@@ -261,6 +308,7 @@ export function useCategories() {
     toggleStatus,
     toggleFeatured,
     reorderCategories,
-    uploadImage,
+    bulkArchive,
+    bulkToggleStatus,
   };
 }
