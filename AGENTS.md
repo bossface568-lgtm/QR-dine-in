@@ -161,6 +161,10 @@ Key patterns:
 
 This document is shared between BOTH developers and must become the single source of truth for how development is performed across the QR Dine SaaS platform.
 
+### Project Overview
+
+**QR Dine SaaS** is a production-grade multi-tenant Restaurant QR Ordering & Restaurant Intelligence SaaS platform built for restaurants, cafes, hotels, food courts, and dine-in businesses.
+
 ### Project Structure & Ownership
 
 This project is developed by TWO developers using ONE GitHub repository and ONE shared InsForge backend.
@@ -168,36 +172,42 @@ This project is developed by TWO developers using ONE GitHub repository and ONE 
 #### Developer A (Technical Architect)
 **Owns:**
 - Backend Architecture
-- Database Schema
+- Database Design & Schema
 - Database Migrations
-- Object Storage
-- Security Policies
 - Authentication
-- Admin Panel
-- Kitchen Display
-- Analytics
-- AI
-- Billing
-- Subscriptions
-- Restaurant Management
+- Admin Panel (`apps/admin`)
+- Restaurant Settings
+- Branch Management
 - Categories
 - Menu
 - Variants
-- Modifiers
+- Modifier Groups
 - Tables
-- QR Codes
+- QR Code Generation (Admin-side generation ONLY)
+- Kitchen Display System - KDS (`apps/kitchen`)
+- Orders Business Logic
+- Analytics
+- AI
+- Billing
+- Subscription
+- Media Service
+- Object Storage
 - APIs
-- Shared Business Logic
+- Security Policies
 
 #### Developer B
 **Owns ONLY:**
 - Customer Application (`apps/customer`)
-- Customer UI
-- Customer UX
+- QR Scan
+- Restaurant Loading
+- Customer Layout
+- Menu Display
+- Search & Filters
+- Product Details
 - Customer Cart
-- Customer Checkout UI
-- Customer Order Tracking UI
-- Customer Animations
+- Checkout UI
+- Order Tracking UI
+- Customer UX & Animations
 - Customer Responsive Design
 
 > [!IMPORTANT]
@@ -205,21 +215,68 @@ This project is developed by TWO developers using ONE GitHub repository and ONE 
 
 ---
 
-### GitHub Repository Rules
+### Backend Ownership & Restrictions
 
-- There is **ONLY ONE** GitHub repository: **`git@github.com:bossface568-lgtm/QR-dine-in.git`** (`https://github.com/bossface568-lgtm/QR-dine-in.git`).
-- Both developers push to and pull from this exact repository.
-- Nobody should exchange ZIP files.
-- Nobody should manually copy project folders.
-- All collaboration must happen through Git.
-- Both developers clone this repository only once.
-- All future updates must happen using `git pull` and `git push`.
+Only Developer A is allowed to:
+- Create database tables
+- Modify schema
+- Create migrations
+- Modify storage buckets
+- Modify authentication
+- Modify APIs
+- Modify backend business logic
+
+Developer B must **NEVER**:
+- Create new database tables.
+- Modify schema.
+- Rename tables.
+- Delete columns.
+- Create migrations.
+- Modify storage buckets.
+- Change authentication.
+- Change security policies.
+
+*If backend changes are required by Developer B, document the requirement instead of implementing it.*
 
 ---
 
-### Branch Strategy
+### QR Code Generation & Scanning Rules
 
-Repository structure:
+- **QR Code Generation**: Belongs **ONLY** to Developer A (Admin Panel). Admin creates, configures, and generates QR Codes for tables/branches.
+- **Customer Application**: Scans QR, validates parameters, loads Restaurant, loads Branch, and creates Table Sessions. **Never generate QR codes inside Customer App.**
+
+---
+
+### Real Data & Media Policies
+
+#### Real Data Policy
+This project **NEVER** uses:
+- Mock Data
+- Demo Data
+- Fake JSON
+- Temporary Arrays
+- Hardcoded Restaurants
+- Sample Menu Items
+
+Every feature must consume the real backend (`@insforge/sdk`).
+
+#### Media Policy
+- All image uploads **MUST** go through the shared Media Service (`mediaService` in `@qrdine/lib`). Never upload directly to storage.
+- **Accepted Files**: Up to 50 MB input size (JPG, PNG, WebP).
+- **Automated Pipeline**: Client-side EXIF stripping, scaling to target dimensions, WebP conversion, and **Adaptive Compression** to target size ranges (100KB–700KB depending on entity type).
+- Only the optimized image and generated responsive variants (`thumb`, `small`, `medium`, `large`) are stored in storage. The raw original file is **NEVER** stored.
+
+---
+
+### GitHub Repository & Branch Strategy
+
+- **ONLY ONE** GitHub repository: **`git@github.com:bossface568-lgtm/QR-dine-in.git`** (`https://github.com/bossface568-lgtm/QR-dine-in.git`).
+- Both developers push to and pull from this exact repository.
+- Nobody should exchange ZIP files or manually copy project folders.
+- Both developers clone this repository only once.
+- All future updates must happen using `git pull` and `git push`.
+
+#### Branch Strategy
 
 `main`  
 └─ `develop`  
@@ -260,32 +317,18 @@ Repository structure:
 
 ---
 
-### Backend Ownership & Restrictions
-
-Developer B must **NEVER**:
-- Create new database tables.
-- Modify schema.
-- Rename tables.
-- Delete columns.
-- Create migrations.
-- Modify storage buckets.
-- Change authentication.
-- Change security policies.
-
-*If backend changes are required, Developer B should document the requirement instead of implementing it.*
-
----
-
 ### Daily Workflow
 
-Every development session must follow this order:
+Every development session must follow this exact order:
 
-1. **Step 1**: Pull latest changes from the assigned branch (`git pull`).
-2. **Step 2**: Implement only the assigned module.
-3. **Step 3**: Run project checks (`npm run typecheck` / build).
-4. **Step 4**: Verify no unrelated files were modified.
-5. **Step 5**: Commit with meaningful commit messages.
-6. **Step 6**: Push to the assigned branch (`git push`).
+1. **Step 1**: Pull latest changes from the assigned branch (`git pull origin <branch>`).
+2. **Step 2**: Read `AGENTS.md` and inspect the current project.
+3. **Step 3**: Implement only the assigned module.
+4. **Step 4**: Run project checks (`npm run typecheck` & build).
+5. **Step 5**: Verify no unrelated files were modified.
+6. **Step 6**: Commit with meaningful Conventional Commit messages.
+7. **Step 7**: Push to the assigned branch (`git push origin <branch>`).
+8. **Step 8**: Update documentation in `docs/`.
 
 ---
 
@@ -298,7 +341,7 @@ Use clear, standardized commit messages following Conventional Commits syntax:
 - `feat(customer): build menu page`
 - `fix(admin): resolve onboarding validation`
 - `fix(customer): improve menu loading`
-- `docs: update AGENT.md`
+- `docs: update AGENTS.md`
 - `refactor(admin): extract media service`
 
 **Avoid generic commit messages such as:**
@@ -318,54 +361,65 @@ Pull Request descriptions must include:
 - **Breaking Changes**
 - **Testing Completed**
 - **Known Limitations**
+- **Documentation Updated**
 
 *Developer A reviews all backend-related changes.*
 
 ---
 
-### Conflict Prevention Rules
+### Current Development Status
 
-- Never edit another developer's feature without discussion.
-- Never rename shared files without approval.
-- Never move shared folders.
-- Never duplicate existing utilities.
-- Always inspect existing code before creating new components.
+- **Completed**:
+  - Project Architecture & Monorepo Foundation
+  - Database Schema & RLS Policies (`001` - `014`)
+  - Authentication Engine
+  - Restaurant Onboarding Flow
+  - Dashboard Foundation
+  - Branch Management Module
+  - Media Foundation & Adaptive WebP Processor
+  - Restaurant Settings Module (7 Tabs: General, Branding, Business, Regional, Ordering, Notifications, Integrations)
+- **Current Development**:
+  - Category Management
+- **Upcoming Modules (Developer A)**:
+  - Menu Management
+  - Modifier Groups
+  - Variants
+  - Tables & QR Generation
+  - Kitchen Display System (KDS)
+  - Orders Business Logic
+  - Payments Integration
+  - Analytics & AI Insights
 
 ---
 
-### Documentation Requirements
+### Customer Application Roadmap (Developer B)
 
-Whenever a feature is completed, update documentation in `docs/` covering:
-- New routes
-- New APIs
-- New components
-- Database changes
-- Storage changes
-- Configuration changes
-- Future extension points
+Developer B must execute the customer application according to this roadmap:
+
+1. **Customer Foundation**
+2. **QR Scan & Parameter Validation**
+3. **Restaurant & Branch Loading**
+4. **Branding & Theme Engine**
+5. **Menu Display**
+6. **Product Details Modal**
+7. **Cart Management**
+8. **Checkout UI**
+9. **Real-time Order Tracking UI**
+10. **Customer Experience & Polish**
 
 ---
 
-### Quality Rules
+### Quality & AI Agent Rules
 
-Before committing, ensure:
+Before committing or completing a turn, ensure:
 - Project builds successfully (`npm run build`).
-- No lint errors.
-- No type errors (`npx tsc --noEmit`).
-- No console errors.
-- No duplicated code.
-- No dead code.
+- No lint or TypeScript errors (`npx tsc --noEmit`).
+- No console errors or silent fallbacks.
 - Documentation updated.
 
----
-
-### AI Agent Rules
-
-Whenever you receive a new prompt:
+**AI Agent Rules:**
 1. Read `AGENTS.md` first.
-2. Respect file ownership.
-3. Never generate duplicate architecture.
-4. Never replace existing implementations.
-5. Always extend the current project.
-6. If a requested change belongs to the other developer's ownership, stop and explain why instead of making the change.
-
+2. Inspect the existing codebase before writing code.
+3. Reuse existing components and services. Never duplicate code or recreate architecture.
+4. Always extend the current project.
+5. Respect developer ownership boundaries.
