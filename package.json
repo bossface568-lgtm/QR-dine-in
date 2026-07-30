@@ -1,0 +1,34 @@
+{
+  "name": "qrdine-saas",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:admin": "npm run dev -w apps/admin",
+    "dev:customer": "npm run dev -w apps/customer",
+    "dev:kitchen": "npm run dev -w apps/kitchen",
+    "build:types": "npm run build -w packages/types",
+    "build:shared": "npm run build -w packages/shared",
+    "build:lib": "npm run build -w packages/lib",
+    "build:ui": "npm run build -w packages/ui",
+    "build:packages": "npm run build:types && npm run build:shared && npm run build:lib && npm run build:ui",
+    "build:admin": "npm run build -w apps/admin",
+    "build:customer": "npm run build -w apps/customer",
+    "build:kitchen": "npm run build -w apps/kitchen",
+    "build": "npm run build:packages && npm run build:admin && npm run build:customer && npm run build:kitchen",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf packages/*/dist apps/*/dist node_modules/.cache"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "rimraf": "^5.0.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

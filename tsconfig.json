@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@qrdine/types": ["./packages/types/src"],
+      "@qrdine/types/*": ["./packages/types/src/*"],
+      "@qrdine/lib": ["./packages/lib/src"],
+      "@qrdine/lib/*": ["./packages/lib/src/*"],
+      "@qrdine/shared": ["./packages/shared/src"],
+      "@qrdine/shared/*": ["./packages/shared/src/*"],
+      "@qrdine/ui": ["./packages/ui/src"],
+      "@qrdine/ui/*": ["./packages/ui/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "**/dist"]
+}

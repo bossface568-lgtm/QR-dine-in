@@ -1,0 +1,15 @@
+{
+  "name": "@qrdine/lib",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@insforge/sdk": "latest",
+    "@qrdine/types": "*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  }
+}
