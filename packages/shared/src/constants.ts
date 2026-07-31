@@ -136,3 +136,98 @@ export const SUPPORTED_LANGUAGES = [
 
 export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+// -------------------------------------------------------------
+// Menu Item Status Constants
+// -------------------------------------------------------------
+export const MENU_ITEM_STATUS_LABELS: Record<string, string> = {
+  available: 'Available',
+  unavailable: 'Unavailable',
+  hidden: 'Hidden',
+  out_of_stock: 'Out of Stock',
+  coming_soon: 'Coming Soon',
+  discontinued: 'Discontinued',
+};
+
+export const MENU_ITEM_STATUS_COLORS: Record<string, string> = {
+  available: 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20',
+  unavailable: 'bg-slate-500/15 text-slate-400 border border-slate-500/20',
+  hidden: 'bg-purple-500/15 text-purple-400 border border-purple-500/20',
+  out_of_stock: 'bg-rose-500/15 text-rose-500 border border-rose-500/20',
+  coming_soon: 'bg-blue-500/15 text-blue-400 border border-blue-500/20',
+  discontinued: 'bg-zinc-500/15 text-zinc-400 border border-zinc-500/20',
+};
+
+// -------------------------------------------------------------
+// Dietary Tag Definitions
+// -------------------------------------------------------------
+export const DIETARY_TAG_OPTIONS: { value: string; label: string; icon: string; color: string; bgColor: string }[] = [
+  { value: 'veg', label: 'Vegetarian', icon: '🟢', color: 'text-green-500', bgColor: 'bg-green-500/15 border-green-500/30' },
+  { value: 'non_veg', label: 'Non-Vegetarian', icon: '🔴', color: 'text-red-500', bgColor: 'bg-red-500/15 border-red-500/30' },
+  { value: 'vegan', label: 'Vegan', icon: '🌱', color: 'text-emerald-500', bgColor: 'bg-emerald-500/15 border-emerald-500/30' },
+  { value: 'egg', label: 'Contains Egg', icon: '🥚', color: 'text-amber-500', bgColor: 'bg-amber-500/15 border-amber-500/30' },
+  { value: 'halal', label: 'Halal', icon: '☪️', color: 'text-teal-500', bgColor: 'bg-teal-500/15 border-teal-500/30' },
+  { value: 'jain', label: 'Jain', icon: '🙏', color: 'text-orange-500', bgColor: 'bg-orange-500/15 border-orange-500/30' },
+  { value: 'gluten_free', label: 'Gluten Free', icon: '🌾', color: 'text-yellow-500', bgColor: 'bg-yellow-500/15 border-yellow-500/30' },
+  { value: 'dairy_free', label: 'Dairy Free', icon: '🥛', color: 'text-sky-500', bgColor: 'bg-sky-500/15 border-sky-500/30' },
+  { value: 'nut_free', label: 'Nut Free', icon: '🥜', color: 'text-lime-500', bgColor: 'bg-lime-500/15 border-lime-500/30' },
+  { value: 'spicy', label: 'Spicy', icon: '🌶️', color: 'text-red-600', bgColor: 'bg-red-600/15 border-red-600/30' },
+  { value: 'chef_special', label: "Chef's Special", icon: '👨‍🍳', color: 'text-violet-500', bgColor: 'bg-violet-500/15 border-violet-500/30' },
+  { value: 'new_item', label: 'New', icon: '✨', color: 'text-cyan-500', bgColor: 'bg-cyan-500/15 border-cyan-500/30' },
+  { value: 'best_seller', label: 'Best Seller', icon: '🔥', color: 'text-orange-500', bgColor: 'bg-orange-500/15 border-orange-500/30' },
+  { value: 'seasonal', label: 'Seasonal', icon: '🍂', color: 'text-amber-600', bgColor: 'bg-amber-600/15 border-amber-600/30' },
+];
+
+// -------------------------------------------------------------
+// Allergen Options
+// -------------------------------------------------------------
+export const ALLERGEN_OPTIONS: { value: string; label: string }[] = [
+  { value: 'gluten', label: 'Gluten' },
+  { value: 'dairy', label: 'Dairy / Milk' },
+  { value: 'eggs', label: 'Eggs' },
+  { value: 'peanuts', label: 'Peanuts' },
+  { value: 'tree_nuts', label: 'Tree Nuts' },
+  { value: 'soy', label: 'Soy' },
+  { value: 'shellfish', label: 'Shellfish' },
+  { value: 'fish', label: 'Fish' },
+  { value: 'sesame', label: 'Sesame' },
+  { value: 'mustard', label: 'Mustard' },
+  { value: 'celery', label: 'Celery' },
+  { value: 'sulphites', label: 'Sulphites' },
+];
+
+// -------------------------------------------------------------
+// Tax Categories (India-focused presets)
+// -------------------------------------------------------------
+export const TAX_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'gst_0', label: 'GST 0% (Exempt)' },
+  { value: 'gst_5', label: 'GST 5%' },
+  { value: 'gst_12', label: 'GST 12%' },
+  { value: 'gst_18', label: 'GST 18%' },
+  { value: 'gst_28', label: 'GST 28%' },
+  { value: 'custom', label: 'Custom Tax' },
+];
+
+// -------------------------------------------------------------
+// Spice Levels
+// -------------------------------------------------------------
+export const SPICE_LEVELS: { value: number; label: string; icon: string }[] = [
+  { value: 0, label: 'Not Spicy', icon: '' },
+  { value: 1, label: 'Mild', icon: '🌶️' },
+  { value: 2, label: 'Medium', icon: '🌶️🌶️' },
+  { value: 3, label: 'Hot', icon: '🌶️🌶️🌶️' },
+  { value: 4, label: 'Very Hot', icon: '🌶️🌶️🌶️🌶️' },
+  { value: 5, label: 'Extreme', icon: '🌶️🌶️🌶️🌶️🌶️' },
+];
+
+// -------------------------------------------------------------
+// Meal Period Presets
+// -------------------------------------------------------------
+export const MEAL_PERIODS: { value: string; label: string; from: string; until: string }[] = [
+  { value: 'breakfast', label: 'Breakfast', from: '07:00', until: '11:00' },
+  { value: 'lunch', label: 'Lunch', from: '12:00', until: '15:00' },
+  { value: 'dinner', label: 'Dinner', from: '19:00', until: '23:00' },
+  { value: 'brunch', label: 'Brunch', from: '10:00', until: '14:00' },
+  { value: 'late_night', label: 'Late Night', from: '22:00', until: '03:00' },
+  { value: 'all_day', label: 'All Day', from: '', until: '' },
+];
+

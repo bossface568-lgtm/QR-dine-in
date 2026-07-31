@@ -206,17 +206,18 @@ npm --prefix apps/admin run build
 
 ### Completed Modules
 - Monorepo Workspaces & Package Foundations
-- Database Migration System (`001` to `014`) & Row Level Security
+- Database Migration System (`001` to `015`) & Row Level Security
 - Authentication & Staff Security Roles
 - Restaurant Onboarding Wizard
 - Branch Management Engine
 - Adaptive WebP Media Processing Pipeline
 - Restaurant Settings Module (7 Tabs: General, Branding, Business, Regional, Ordering, Notifications, Integrations)
 - Category Management Module
+- Menu Management Module (Items CRUD, Dietary Tags, Multi-Image Gallery, Pricing, Preparation Time, Availability Scheduling, Branch Visibility)
 
 ### Developer A Roadmap (Admin & Backend)
 - [x] Category Management Module
-- [ ] Menu Item CRUD & Pricing Engine
+- [x] Menu Item CRUD & Pricing Engine
 - [ ] Modifier Groups & Product Variants
 - [ ] Table Layout Grid & QR Code Generator
 - [ ] Kitchen Display System (KDS) Live Tickets

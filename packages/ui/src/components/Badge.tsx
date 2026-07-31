@@ -6,6 +6,7 @@ export interface BadgeProps {
   variant?: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'cancelled' | 'available' | 'occupied' | 'reserved' | 'inactive' | 'archived';
   size?: 'sm' | 'md';
   dot?: boolean;
+  className?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -13,6 +14,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = 'pending',
   size = 'sm',
   dot = false,
+  className,
 }) => {
   const baseStyles = 'inline-flex items-center font-medium rounded-full border';
 
@@ -50,7 +52,7 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   return (
-    <span className={cn(baseStyles, variants[variant], sizes[size])}>
+    <span className={cn(baseStyles, variants[variant], sizes[size], className)}>
       {dot && (
         <span
           className={cn(

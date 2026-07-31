@@ -228,22 +228,141 @@ export interface UpdateCategoryPayload extends Partial<CreateCategoryPayload> {}
 
 export type CategoryFilterType = 'all' | 'active' | 'inactive' | 'featured' | 'archived';
 
+// -------------------------------------------------------------
+// Menu Item Types
+// -------------------------------------------------------------
+export type MenuItemStatus = 'available' | 'unavailable' | 'hidden' | 'out_of_stock' | 'coming_soon' | 'discontinued';
+
+export type DietaryTag =
+  | 'veg'
+  | 'non_veg'
+  | 'vegan'
+  | 'egg'
+  | 'halal'
+  | 'jain'
+  | 'gluten_free'
+  | 'dairy_free'
+  | 'nut_free'
+  | 'spicy'
+  | 'chef_special'
+  | 'new_item'
+  | 'best_seller'
+  | 'seasonal';
+
+export interface MenuItemGalleryImage {
+  url: string;
+  sort_order: number;
+  alt?: string;
+}
+
 export interface MenuItem {
   id: string;
   restaurant_id: string;
   category_id: string;
+  branch_id: string | null;
+
+  // Identity
   name: string;
+  short_name: string | null;
+  slug: string;
   description: string | null;
-  price: number;
+  short_description: string | null;
+
+  // Pricing
+  base_price: number;
+  compare_at_price: number | null;
+  tax_category: string | null;
+
+  // Codes
+  sku: string | null;
+  internal_code: string | null;
+  barcode: string | null;
+
+  // Media
   image_url: string | null;
-  is_available: boolean;
-  is_veg: boolean;
+  gallery_json: MenuItemGalleryImage[];
+
+  // Dietary & Tags
+  dietary_tags: DietaryTag[];
   allergens: string[];
+
+  // Operations
   preparation_time: number | null;
+  calories: number | null;
+  spice_level: number;
+
+  // Status
+  status: MenuItemStatus;
+
+  // Display & Sorting
   sort_order: number;
+  is_featured: boolean;
+  is_new: boolean;
+  is_best_seller: boolean;
+  is_chef_special: boolean;
+  is_seasonal: boolean;
+
+  // Availability Schedule
+  available_from: string | null;
+  available_until: string | null;
+  available_days: string[] | null;
+
+  // Branch Availability
+  branch_availability: string[];
+
+  // Extensibility
+  metadata_json: Record<string, any>;
+
+  // Audit
+  created_by: string | null;
+  updated_by: string | null;
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 }
+
+export interface MenuItemWithCategory extends MenuItem {
+  category?: Category;
+}
+
+export interface CreateMenuItemPayload {
+  name: string;
+  short_name?: string;
+  slug?: string;
+  description?: string;
+  short_description?: string;
+  category_id: string;
+  branch_id?: string | null;
+  base_price: number;
+  compare_at_price?: number | null;
+  tax_category?: string | null;
+  sku?: string | null;
+  internal_code?: string | null;
+  barcode?: string | null;
+  image_url?: string | null;
+  gallery_json?: MenuItemGalleryImage[];
+  dietary_tags?: DietaryTag[];
+  allergens?: string[];
+  preparation_time?: number | null;
+  calories?: number | null;
+  spice_level?: number;
+  status?: MenuItemStatus;
+  sort_order?: number;
+  is_featured?: boolean;
+  is_new?: boolean;
+  is_best_seller?: boolean;
+  is_chef_special?: boolean;
+  is_seasonal?: boolean;
+  available_from?: string | null;
+  available_until?: string | null;
+  available_days?: string[] | null;
+  branch_availability?: string[];
+  metadata_json?: Record<string, any>;
+}
+
+export interface UpdateMenuItemPayload extends Partial<CreateMenuItemPayload> {}
+
+export type MenuItemFilterType = 'all' | 'active' | 'inactive' | 'featured' | 'out_of_stock' | 'archived';
 
 export type TableStatus = 'available' | 'occupied' | 'reserved' | 'inactive';
 
