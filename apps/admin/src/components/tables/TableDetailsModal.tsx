@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Branch } from '@qrdine/types';
-import { Modal, Button } from '@qrdine/ui';
-import { formatDate, TABLE_STATUS_COLORS, TABLE_STATUS_LABELS } from '@qrdine/shared';
+import { Modal, Button, useToast } from '@qrdine/ui';
+import { formatDate, TABLE_STATUS_COLORS, TABLE_STATUS_LABELS, buildPublicTableUrl } from '@qrdine/shared';
 import { TableStatusBadge } from './TableStatusBadge';
 import {
   Users,
@@ -16,7 +16,9 @@ import {
   Archive,
   Clock,
   Sparkles,
-  ShieldCheck,
+  Key,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 
 interface TableDetailsModalProps {
@@ -26,6 +28,7 @@ interface TableDetailsModalProps {
   onEdit: () => void;
   onArchive: () => void;
   branches?: Branch[];
+  restaurantSlug?: string;
 }
 
 export const TableDetailsModal: React.FC<TableDetailsModalProps> = ({
@@ -35,7 +38,9 @@ export const TableDetailsModal: React.FC<TableDetailsModalProps> = ({
   onEdit,
   onArchive,
   branches = [],
+  restaurantSlug = '',
 }) => {
+  const { toast } = useToast();
   if (!table) return null;
 
   const branch = branches.find((b) => b.id === table.branch_id);
@@ -164,6 +169,47 @@ export const TableDetailsModal: React.FC<TableDetailsModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* PUBLIC URL & TABLE TOKEN FOUNDATION SECTION */}
+        {restaurantSlug && table.table_token && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-orange-500/10 via-slate-950 to-slate-950 border border-orange-500/30 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                <Key className="w-4 h-4 text-orange-400" /> Public Customer Table Endpoint
+              </h3>
+              <span className="text-[11px] font-mono font-semibold text-orange-300 bg-orange-500/20 px-2 py-0.5 rounded border border-orange-500/30">
+                Token: {table.table_token}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-slate-900/90 border border-slate-800">
+              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-mono text-slate-300 w-full sm:w-auto">
+                {buildPublicTableUrl(restaurantSlug, table.table_token)}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(buildPublicTableUrl(restaurantSlug, table.table_token));
+                    toast('Table URL copied to clipboard!', 'success');
+                  }}
+                  className="gap-1 text-xs text-orange-400 border-orange-500/30 hover:bg-orange-500/10"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy URL
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(buildPublicTableUrl(restaurantSlug, table.table_token), '_blank')}
+                  className="gap-1 text-xs text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Link
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-800">

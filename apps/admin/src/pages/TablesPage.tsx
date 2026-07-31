@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTables } from '../hooks/useTables';
-import { Button, Spinner, EmptyState, Modal } from '@qrdine/ui';
-import { cn, formatDate } from '@qrdine/shared';
+import { Button, Spinner, EmptyState, Modal, useToast } from '@qrdine/ui';
+import { cn, formatDate, buildPublicRestaurantUrl, buildPublicTableUrl } from '@qrdine/shared';
 import { Table, TableStatus, TableFilterType, CreateTablePayload, UpdateTablePayload } from '@qrdine/types';
 import { TableCard } from '../components/tables/TableCard';
 import { TableFormModal } from '../components/tables/TableFormModal';
@@ -20,10 +20,16 @@ import {
   Archive,
   QrCode,
   AlertTriangle,
+  Globe,
+  Copy,
+  ExternalLink,
+  Key,
 } from 'lucide-react';
 
 export const TablesPage: React.FC = () => {
+  const { toast } = useToast();
   const {
+    restaurant,
     tables,
     branches,
     loading,
@@ -106,6 +112,44 @@ export const TablesPage: React.FC = () => {
           <Plus className="w-4 h-4" /> Add Table
         </Button>
       </div>
+
+      {/* Public Restaurant URL Banner */}
+      {restaurant?.slug && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-slate-900/80 to-slate-900/80 border border-orange-500/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-orange-500/20 text-orange-400">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-orange-400">Public Restaurant Endpoint</span>
+              <div className="text-sm font-mono text-slate-200 mt-0.5">
+                {buildPublicRestaurantUrl(restaurant.slug)}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(buildPublicRestaurantUrl(restaurant.slug));
+                toast('Public Restaurant URL copied to clipboard!', 'success');
+              }}
+              className="gap-1.5 text-xs text-orange-400 border-orange-500/30 hover:bg-orange-500/10"
+            >
+              <Copy className="w-3.5 h-3.5" /> Copy Restaurant URL
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(buildPublicRestaurantUrl(restaurant.slug), '_blank')}
+              className="gap-1.5 text-xs text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Open Restaurant URL
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
@@ -298,6 +342,7 @@ export const TablesPage: React.FC = () => {
               onRestore={() => restoreTable(t.id)}
               onSetStatus={(status) => setStatus(t.id, status)}
               branches={branches}
+              restaurantSlug={restaurant?.slug}
             />
           ))}
         </div>
@@ -318,13 +363,12 @@ export const TablesPage: React.FC = () => {
                     </button>
                   </th>
                   <th className="px-4 py-3.5">Table No.</th>
+                  <th className="px-4 py-3.5">Token</th>
                   <th className="px-4 py-3.5">Name / Label</th>
                   <th className="px-4 py-3.5">Branch</th>
                   <th className="px-4 py-3.5">Capacity</th>
                   <th className="px-4 py-3.5">Floor / Section</th>
                   <th className="px-4 py-3.5">Status</th>
-                  <th className="px-4 py-3.5">QR Status</th>
-                  <th className="px-4 py-3.5">Last Updated</th>
                   <th className="px-4 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -332,6 +376,7 @@ export const TablesPage: React.FC = () => {
                 {filteredTables.map((t) => {
                   const isSelected = selectedIds.includes(t.id);
                   const branch = branches.find((b) => b.id === t.branch_id);
+                  const tableUrl = restaurant?.slug && t.table_token ? buildPublicTableUrl(restaurant.slug, t.table_token) : '';
 
                   return (
                     <tr
@@ -352,6 +397,12 @@ export const TablesPage: React.FC = () => {
                       </td>
                       <td className="px-4 py-4 font-mono font-bold text-slate-200">
                         {t.table_number}
+                      </td>
+                      <td className="px-4 py-4 font-mono font-semibold text-orange-400">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-[11px]">
+                          <Key className="w-3 h-3 text-orange-400" />
+                          {t.table_token}
+                        </span>
                       </td>
                       <td className="px-4 py-4 font-semibold text-slate-100">
                         {t.label || `Table ${t.table_number}`}
@@ -380,16 +431,22 @@ export const TablesPage: React.FC = () => {
                           <TableStatusBadge status={t.status} />
                         )}
                       </td>
-                      <td className="px-4 py-4 text-slate-500 font-mono text-[11px]">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950 border border-slate-800">
-                          <QrCode className="w-3 h-3 text-slate-600" /> Ready
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-slate-500">
-                        {formatDate(t.updated_at)}
-                      </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {tableUrl && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                navigator.clipboard.writeText(tableUrl);
+                                toast('Table URL copied!', 'success');
+                              }}
+                              title="Copy Public Table URL"
+                              className="text-orange-400 hover:text-orange-300"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => setDetailsTable(t)}>
                             View
                           </Button>
@@ -442,16 +499,17 @@ export const TablesPage: React.FC = () => {
           onClose={() => setDetailsTable(null)}
           table={detailsTable}
           onEdit={() => {
-            const item = detailsTable;
+            const tbl = detailsTable;
             setDetailsTable(null);
-            setEditTable(item);
+            setEditTable(tbl);
           }}
           onArchive={() => {
-            const item = detailsTable;
+            const tbl = detailsTable;
             setDetailsTable(null);
-            setArchiveTableState(item);
+            setArchiveTableState(tbl);
           }}
           branches={branches}
+          restaurantSlug={restaurant?.slug}
         />
       )}
 

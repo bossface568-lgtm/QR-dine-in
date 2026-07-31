@@ -1,8 +1,9 @@
 import React from 'react';
 import { Table, TableStatus, Branch } from '@qrdine/types';
 import { Button } from '@qrdine/ui';
-import { cn, TABLE_STATUS_COLORS, TABLE_STATUS_LABELS } from '@qrdine/shared';
+import { cn, TABLE_STATUS_COLORS, TABLE_STATUS_LABELS, buildPublicTableUrl } from '@qrdine/shared';
 import { TableStatusBadge } from './TableStatusBadge';
+import { useToast } from '@qrdine/ui';
 import {
   Users,
   Building2,
@@ -12,11 +13,13 @@ import {
   Activity,
   ShoppingBag,
   CreditCard,
-  MoreVertical,
   Edit,
   Eye,
   Archive,
   RefreshCw,
+  Copy,
+  ExternalLink,
+  Key,
 } from 'lucide-react';
 
 interface TableCardProps {
@@ -29,6 +32,7 @@ interface TableCardProps {
   onRestore: () => void;
   onSetStatus: (status: TableStatus) => void;
   branches?: Branch[];
+  restaurantSlug?: string;
 }
 
 export const TableCard: React.FC<TableCardProps> = ({
@@ -41,9 +45,25 @@ export const TableCard: React.FC<TableCardProps> = ({
   onRestore,
   onSetStatus,
   branches = [],
+  restaurantSlug = '',
 }) => {
+  const { toast } = useToast();
   const branch = branches.find((b) => b.id === table.branch_id);
   const isArchived = !!table.archived_at;
+  const tableUrl = restaurantSlug && table.table_token ? buildPublicTableUrl(restaurantSlug, table.table_token) : '';
+
+  const handleCopyUrl = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!tableUrl) return;
+    navigator.clipboard.writeText(tableUrl);
+    toast('Table URL copied to clipboard!', 'success');
+  };
+
+  const handleOpenUrl = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!tableUrl) return;
+    window.open(tableUrl, '_blank');
+  };
 
   return (
     <div
@@ -123,33 +143,50 @@ export const TableCard: React.FC<TableCardProps> = ({
             {table.section}
           </span>
         )}
+        {/* Table Token */}
+        {table.table_token && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/30 text-orange-400 font-mono text-[11px]">
+            <Key className="w-3 h-3 text-orange-400" />
+            {table.table_token}
+          </span>
+        )}
       </div>
 
-      {/* EXPLICIT PLACEHOLDERS FOR FUTURE MODULES */}
+      {/* EXPLICIT PLACEHOLDERS & PUBLIC URL ACTIONS */}
       <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/50 mb-4 text-[11px]">
-        {/* QR Placeholder */}
+        {/* Public Table Token */}
+        <div className="flex items-center gap-1.5 text-slate-400">
+          <Key className="w-3.5 h-3.5 text-orange-400" />
+          <span className="truncate font-mono font-medium text-slate-200">{table.table_token || 'Token Ready'}</span>
+        </div>
+
+        {/* QR Status Placeholder */}
         <div className="flex items-center gap-1.5 text-slate-400">
           <QrCode className="w-3.5 h-3.5 text-slate-500" />
-          <span className="truncate">QR: Ready</span>
+          <span className="truncate">QR: Encoded</span>
         </div>
 
-        {/* Live Session Placeholder */}
-        <div className="flex items-center gap-1.5 text-slate-400">
-          <Activity className="w-3.5 h-3.5 text-slate-500" />
-          <span className="truncate">Session: None</span>
-        </div>
+        {/* Copy Table URL Action */}
+        <button
+          type="button"
+          onClick={handleCopyUrl}
+          className="flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 font-medium transition-colors cursor-pointer"
+          title="Copy Public Table URL"
+        >
+          <Copy className="w-3.5 h-3.5" />
+          <span>Copy Table URL</span>
+        </button>
 
-        {/* Current Order Placeholder */}
-        <div className="flex items-center gap-1.5 text-slate-400">
-          <ShoppingBag className="w-3.5 h-3.5 text-slate-500" />
-          <span className="truncate">Order: None</span>
-        </div>
-
-        {/* Current Bill Placeholder */}
-        <div className="flex items-center gap-1.5 text-slate-400">
-          <CreditCard className="w-3.5 h-3.5 text-slate-500" />
-          <span className="truncate">Bill: ₹0.00</span>
-        </div>
+        {/* Open Table URL Action */}
+        <button
+          type="button"
+          onClick={handleOpenUrl}
+          className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors cursor-pointer"
+          title="Open Table Public Page"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          <span>Open Table URL</span>
+        </button>
       </div>
 
       {/* Action Footer */}
@@ -159,18 +196,29 @@ export const TableCard: React.FC<TableCardProps> = ({
         </Button>
 
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={onEdit} className="text-xs text-slate-300 hover:text-white">
-            <Edit className="w-3.5 h-3.5 mr-1" /> Edit
-          </Button>
-
-          {!isArchived ? (
-            <Button size="sm" variant="ghost" onClick={onArchive} className="text-xs text-rose-400 hover:text-rose-300">
-              <Archive className="w-3.5 h-3.5 mr-1" /> Archive
-            </Button>
-          ) : (
-            <Button size="sm" variant="ghost" onClick={onRestore} className="text-xs text-emerald-400 hover:text-emerald-300">
+          {isArchived ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRestore}
+              className="text-xs text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+            >
               <RefreshCw className="w-3.5 h-3.5 mr-1" /> Restore
             </Button>
+          ) : (
+            <>
+              <Button size="sm" variant="ghost" onClick={onEdit} className="text-xs text-slate-300 hover:text-white">
+                <Edit className="w-3.5 h-3.5 mr-1" /> Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onArchive}
+                className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+              >
+                <Archive className="w-3.5 h-3.5" />
+              </Button>
+            </>
           )}
         </div>
       </div>

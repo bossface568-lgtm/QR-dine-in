@@ -11,6 +11,7 @@ export interface Restaurant {
   currency: string;
   timezone: string;
   status: 'active' | 'inactive' | 'suspended';
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -371,6 +372,7 @@ export interface Table {
   restaurant_id: string;
   branch_id: string | null;
   table_number: string;
+  table_token: string;
   label: string | null;
   seating_capacity: number;
   floor: string | null;
@@ -393,9 +395,16 @@ export interface TableWithBranch extends Table {
   branch?: Branch;
 }
 
+export interface PublicTableResolution {
+  restaurant: Restaurant;
+  branch: Branch | null;
+  table: Table | null;
+}
+
 export interface CreateTablePayload {
   branch_id?: string | null;
   table_number: string;
+  table_token?: string;
   label?: string | null;
   seating_capacity: number;
   floor?: string | null;

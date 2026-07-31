@@ -253,6 +253,7 @@ export function useTables() {
   };
 
   return {
+    restaurant,
     tables,
     branches,
     loading,

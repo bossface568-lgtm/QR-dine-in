@@ -381,11 +381,12 @@ Pull Request descriptions must include:
   - Category Management Module
   - Menu Management Module (Items CRUD, Dietary Tags, Multi-Image Gallery, Pricing, Preparation Time, Availability Scheduling, Branch Visibility)
   - Table Management Module (Dining Tables CRUD, Branch Uniqueness Check, Seating Capacity, Floor & Section Grouping, Soft Deletion, Status Tracking, Bulk Actions, Operational Placeholders)
+  - Public Restaurant URL & Table Token Foundation (`/r/:slug` and `/r/:slug/t/:tableToken` resolution, 7-char table tokens, Copy/Open URL actions, Customer routing & 404 validation pages)
 - **Current Development**:
   - Modifier Groups & Variants Module
 - **Upcoming Modules (Developer A)**:
   - Modifier Groups & Variants
-  - QR Code Generation & Sheets
+  - QR Code Generation & Printable Sheets
   - Kitchen Display System (KDS)
   - Orders Business Logic
   - Payments Integration

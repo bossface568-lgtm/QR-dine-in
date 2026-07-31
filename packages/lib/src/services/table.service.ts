@@ -1,5 +1,6 @@
 import { insforge } from '../client';
-import { Table, TableStatus, CreateTablePayload, UpdateTablePayload, ApiResponse } from '@qrdine/types';
+import { Table, TableStatus, CreateTablePayload, UpdateTablePayload, ApiResponse, PublicTableResolution, Restaurant, Branch } from '@qrdine/types';
+import { generateTableToken } from '@qrdine/shared';
 
 /**
  * Table Service — Production-grade service for table CRUD operations.
@@ -79,6 +80,74 @@ export const tableService = {
   },
 
   /**
+   * Resolve a table by restaurant slug and table token (for Customer App)
+   * Validates restaurant status and ensures the table token belongs to the restaurant.
+   */
+  async getTableByToken(restaurantSlug: string, tableToken: string): Promise<ApiResponse<PublicTableResolution>> {
+    try {
+      // 1. Fetch restaurant by slug
+      const { data: restData, error: restErr } = await insforge
+        .database
+        .from('restaurants')
+        .select('*')
+        .eq('slug', restaurantSlug)
+        .limit(1);
+
+      if (restErr) throw restErr;
+      const restaurant: Restaurant | null = Array.isArray(restData) && restData.length > 0 ? restData[0] : null;
+      if (!restaurant) {
+        return { data: null, error: { message: 'Restaurant not found', code: 'RESTAURANT_NOT_FOUND' } };
+      }
+
+      if (restaurant.status !== 'active' && restaurant.is_active === false) {
+        return { data: null, error: { message: 'Restaurant is currently unavailable', code: 'RESTAURANT_UNAVAILABLE' } };
+      }
+
+      // 2. Fetch table by token scoped to this restaurant
+      const { data: tableData, error: tableErr } = await insforge
+        .database
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurant.id)
+        .eq('table_token', tableToken.trim())
+        .is('archived_at', null)
+        .limit(1);
+
+      if (tableErr) throw tableErr;
+      const table: Table | null = Array.isArray(tableData) && tableData.length > 0 ? tableData[0] : null;
+
+      if (!table) {
+        return { data: null, error: { message: 'Invalid table token', code: 'INVALID_TABLE_TOKEN' } };
+      }
+
+      // 3. Optional: Fetch branch if assigned
+      let branch: Branch | null = null;
+      if (table.branch_id) {
+        const { data: branchData } = await insforge
+          .database
+          .from('branches')
+          .select('*')
+          .eq('id', table.branch_id)
+          .limit(1);
+        if (Array.isArray(branchData) && branchData.length > 0) {
+          branch = branchData[0];
+        }
+      }
+
+      return {
+        data: {
+          restaurant,
+          branch,
+          table,
+        },
+        error: null,
+      };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message || 'Failed to resolve table token' } };
+    }
+  },
+
+  /**
    * Check if a table number is available within a branch
    */
   async checkTableNumberAvailable(
@@ -136,11 +205,14 @@ export const tableService = {
         sort_order = highest ? (highest.sort_order + 1) : 1;
       }
 
+      const table_token = payload.table_token ? payload.table_token.trim() : generateTableToken();
+
       const insertRecord: Record<string, any> = {
         restaurant_id: restaurantId,
         created_by: userId,
         branch_id: payload.branch_id || null,
         table_number: payload.table_number.trim(),
+        table_token,
         label: payload.label ? payload.label.trim() : `Table ${payload.table_number.trim()}`,
         seating_capacity: payload.seating_capacity || 4,
         floor: payload.floor ? payload.floor.trim() : null,

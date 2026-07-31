@@ -225,6 +225,7 @@ Stores physical dining tables, seating capacity, branch scoping, floor/section g
 | `restaurant_id` | `UUID` | `NOT NULL`, `REFERENCES restaurants(id) ON DELETE CASCADE` | Scoped tenant |
 | `branch_id` | `UUID` | `REFERENCES branches(id) ON DELETE SET NULL` | Scoped branch |
 | `table_number` | `TEXT` | `NOT NULL` | Unique table code/number per branch |
+| `table_token` | `TEXT` | `NOT NULL`, `UNIQUE` | Unique, random, URL-safe 7-character table token |
 | `label` | `TEXT` | | Display name (e.g. `Window Side Booth 1`) |
 | `seating_capacity` | `INTEGER` | `NOT NULL`, `DEFAULT 4` | Seating capacity |
 | `floor` | `TEXT` | | Floor/level (e.g. `Ground Floor`, `Rooftop`) |
@@ -242,7 +243,7 @@ Stores physical dining tables, seating capacity, branch scoping, floor/section g
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last edit timestamp |
 | `archived_at` | `TIMESTAMPTZ` | | Soft delete timestamp |
 
-* **Indexes**: `idx_tables_restaurant_id`, `idx_tables_branch_id`, `idx_tables_status`, `idx_tables_archived_at`, `idx_tables_floor`, `idx_tables_section`, `idx_tables_number_branch`.
+* **Indexes**: `idx_tables_restaurant_id`, `idx_tables_branch_id`, `idx_tables_status`, `idx_tables_archived_at`, `idx_tables_floor`, `idx_tables_section`, `idx_tables_number_branch`, `idx_tables_table_token`.
 
 ---
 

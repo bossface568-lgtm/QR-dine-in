@@ -48,14 +48,31 @@ export function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export function buildQRCodeUrl(restaurantSlug: string, tableId: string): string {
-  // Returns the URL that the QR Code points to (the customer menu page)
-  const host = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
-  return `${host}/r/${restaurantSlug}/t/${tableId}`;
+export function generateTableToken(): string {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let token = '';
+  for (let i = 0; i < 7; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
 }
 
-export function buildMenuUrl(restaurantSlug: string, tableId: string): string {
-  return `/r/${restaurantSlug}/t/${tableId}`;
+export function buildPublicRestaurantUrl(restaurantSlug: string): string {
+  const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+  return `${base}/r/${restaurantSlug}`;
+}
+
+export function buildPublicTableUrl(restaurantSlug: string, tableToken: string): string {
+  const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+  return `${base}/r/${restaurantSlug}/t/${tableToken}`;
+}
+
+export function buildQRCodeUrl(restaurantSlug: string, tableToken: string): string {
+  return buildPublicTableUrl(restaurantSlug, tableToken);
+}
+
+export function buildMenuUrl(restaurantSlug: string, tableToken: string): string {
+  return `/r/${restaurantSlug}/t/${tableToken}`;
 }
 
 export function cn(...classes: (string | undefined | null | false)[]): string {

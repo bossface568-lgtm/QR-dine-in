@@ -215,11 +215,13 @@ npm --prefix apps/admin run build
 - Category Management Module
 - Menu Management Module (Items CRUD, Dietary Tags, Multi-Image Gallery, Pricing, Preparation Time, Availability Scheduling, Branch Visibility)
 - Table Management Module (Dining Tables CRUD, Branch Uniqueness Check, Seating Capacity, Floor & Section Grouping, Soft Deletion, Status Tracking, Bulk Actions, Operational Placeholders)
+- Public Restaurant URL & Table Token Foundation (`/r/:slug` and `/r/:slug/t/:tableToken` resolution, 7-char table tokens, Copy/Open URL actions, Customer routing & 404 validation pages)
 
 ### Developer A Roadmap (Admin & Backend)
 - [x] Category Management Module
 - [x] Menu Item CRUD & Pricing Engine
 - [x] Table Management Module & Floor Seating Layout
+- [x] Public Restaurant URL & Table Token Foundation
 - [ ] Modifier Groups & Product Variants
 - [ ] QR Code Generator & Printable Sheets
 - [ ] Kitchen Display System (KDS) Live Tickets
