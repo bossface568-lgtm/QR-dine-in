@@ -170,16 +170,18 @@ export function MenuItemFormModal({
     e.preventDefault();
     if (!name.trim() || !categoryId || basePrice === '') return;
 
-    if (restaurantId && slug.trim()) {
-      const check = await menuItemService.checkSlugAvailable(restaurantId, slug.trim(), menuItem?.id);
-      if (check.error || !check.data) {
-        setSlugError('This slug is already in use by another menu item.');
-        return;
-      }
-    }
-
     setIsSubmitting(true);
+    setSlugError(null);
+
     try {
+      if (restaurantId && slug.trim()) {
+        const check = await menuItemService.checkSlugAvailable(restaurantId, slug.trim(), menuItem?.id);
+        if (check.data === false) {
+          setSlugError('This slug is already in use by another menu item.');
+          return;
+        }
+      }
+
       const payload: any = {
         name: name.trim(),
         short_name: shortName.trim() || null,
@@ -214,6 +216,8 @@ export function MenuItemFormModal({
       
       const success = await onSubmit(payload);
       if (success) onClose();
+    } catch (err: any) {
+      console.error('Error submitting menu item:', err);
     } finally {
       setIsSubmitting(false);
     }
