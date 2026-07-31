@@ -371,7 +371,7 @@ Pull Request descriptions must include:
 
 - **Completed**:
   - Project Architecture & Monorepo Foundation
-  - Database Schema & RLS Policies (`001` - `015`)
+  - Database Schema & RLS Policies (`001` - `016`)
   - Authentication Engine
   - Restaurant Onboarding Flow
   - Dashboard Foundation
@@ -380,12 +380,12 @@ Pull Request descriptions must include:
   - Restaurant Settings Module (7 Tabs: General, Branding, Business, Regional, Ordering, Notifications, Integrations)
   - Category Management Module
   - Menu Management Module (Items CRUD, Dietary Tags, Multi-Image Gallery, Pricing, Preparation Time, Availability Scheduling, Branch Visibility)
+  - Table Management Module (Dining Tables CRUD, Branch Uniqueness Check, Seating Capacity, Floor & Section Grouping, Soft Deletion, Status Tracking, Bulk Actions, Operational Placeholders)
 - **Current Development**:
   - Modifier Groups & Variants Module
 - **Upcoming Modules (Developer A)**:
-  - Modifier Groups
-  - Variants
-  - Tables & QR Generation
+  - Modifier Groups & Variants
+  - QR Code Generation & Sheets
   - Kitchen Display System (KDS)
   - Orders Business Logic
   - Payments Integration

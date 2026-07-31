@@ -1,91 +1,96 @@
-# DATABASE SCHEMA SPECIFICATION — QR Dine SaaS
+# QR Dine SaaS — Production Database Schema
 
-This document defines the relational database architecture for the multi-tenant QR Dine SaaS operating system. It lists the core operational tables, their attributes, constraints, indexes, and how future features map onto this foundation.
+This document details the exact PostgreSQL database schema for the QR Dine SaaS multi-tenant platform. All tables enforce tenant isolation using `restaurant_id` foreign keys and Row-Level Security (RLS) policies.
 
 ---
 
-## Entity Relationship Diagram (Conceptual)
+## Entity Relationship Overview
 
-```mermaid
-erDiagram
-    RESTAURANTS ||--o{ ROLES : defines
-    RESTAURANTS ||--o{ RESTAURANT_USERS : employs
-    RESTAURANTS ||--o{ BRANCHES : operates
-    RESTAURANTS ||--o{ STAFF : employs
-    BRANCHES ||--o{ STAFF : houses
-    ROLES ||--o{ RESTAURANT_USERS : assigns
-    ROLES ||--o{ STAFF : assigns
+```
+                      +-------------------+
+                      |   auth.users      |
+                      +---------+---------+
+                                |
+                                v
+                      +---------+---------+
+                      |   restaurants     | (Tenant Root)
+                      +----+----+----+----+
+                           |    |    |
+       +-------------------+    |    +--------------------+
+       |                        |                         |
+       v                        v                         v
++------+------+         +-------+-------+         +-------+-------+
+|   roles     |         |   branches    |         |menu_categories|
++------+------+         +---+---+---+---+         +-------+-------+
+       |                    |   |                         |
+       v                    |   +-------------+           v
++------+------+             |                 |   +-------+-------+
+|restaurant_  |             v                 v   |  menu_items   |
+|   users     |      +------+------+   +------+---+----+      |
++-------------+      |   staff     |   |   tables      |      |
+                     +-------------+   +---------------+      |
+                                                              |
+                                                              v
+                                                   (Modifier Groups & Orders)
 ```
 
 ---
 
-## Detailed Table Reference
+## Table Schemas
 
-### 1. `restaurants` (Root Organization / Tenant)
-Defines the tenant properties.
+### 1. `restaurants` (Tenant Master)
+Stores primary restaurant profiles, owner mapping, and global settings.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
-| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Unique tenant identifier |
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Unique Restaurant ID |
+| `owner_id` | `UUID` | `NOT NULL` | Links to `auth.users(id)` |
 | `name` | `TEXT` | `NOT NULL` | Restaurant display name |
-| `slug` | `TEXT` | `UNIQUE`, `NOT NULL` | Routing slug (e.g. `acme-donuts`) |
-| `logo_url` | `TEXT` | | Brand logo asset url |
-| `restaurant_type` | `TEXT` | | Class (e.g. `Fine Dining`, `Food Court`) |
-| `phone` | `TEXT` | | Primary contact number |
-| `email` | `TEXT` | | Primary contact email |
-| `gst_number` | `TEXT` | | Business Tax ID / GST number |
-| `currency` | `TEXT` | `NOT NULL`, `DEFAULT 'INR'` | Payment currency code |
-| `timezone` | `TEXT` | `NOT NULL`, `DEFAULT 'Asia/Kolkata'` | Operating timezone |
-| `status` | `TEXT` | `NOT NULL`, `DEFAULT 'active'`, `CHECK (active, inactive, suspended)` | Operational status |
-| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Setup timestamp |
-| `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last edit timestamp |
-| `deleted_at` | `TIMESTAMPTZ` | | Soft delete timestamp |
-
-* **Indexes**:
-  * `idx_restaurants_slug` on `slug` (Hash/B-tree for fast subdomain routing lookups).
-  * `idx_restaurants_status` on `status` (B-tree to filter active accounts).
+| `slug` | `TEXT` | `UNIQUE`, `NOT NULL` | Unique subdomain/URL slug |
+| `description` | `TEXT` | | Restaurant short summary |
+| `logo_url` | `TEXT` | | Media Service URL |
+| `cover_image_url` | `TEXT` | | Media Service URL |
+| `address` | `TEXT` | | Primary address |
+| `phone` | `TEXT` | | Contact phone |
+| `currency` | `TEXT` | `DEFAULT 'INR'` | Currency code (INR, USD, EUR, etc.) |
+| `timezone` | `TEXT` | `DEFAULT 'Asia/Kolkata'` | Default timezone |
+| `settings` | `JSONB` | `DEFAULT '{}'` | Global settings JSON |
+| `is_active` | `BOOLEAN` | `NOT NULL`, `DEFAULT true` | Activity status toggle |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Date onboarded |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last edit date |
 
 ---
 
-### 2. `roles` (RBAC Definition)
-Enables custom permission roles per restaurant tenant.
+### 2. `roles` (Access Control Roles)
+Defines customizable RBAC roles per restaurant (e.g. Owner, Manager, Waiter, Kitchen).
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
-| `id` | `UUID` | `PRIMARY KEY` | Role identifier |
-| `restaurant_id` | `UUID` | `NOT NULL`, `REFERENCES restaurants(id) ON DELETE CASCADE` | Connected tenant |
-| `name` | `TEXT` | `NOT NULL` | Role name (e.g. `Manager`, `Chef`) |
-| `description` | `TEXT` | | Role explanation |
-| `permissions_json` | `JSONB` | `NOT NULL`, `DEFAULT '{}'` | Key-value permissions mapping |
-| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Date added |
-
-* **Indexes**:
-  * `idx_roles_restaurant_id` on `restaurant_id` (B-tree for tenant querying).
-  * Unique constraint on `(restaurant_id, name)` to prevent role name collisions inside a single restaurant.
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Role ID |
+| `restaurant_id` | `UUID` | `NOT NULL`, `REFERENCES restaurants(id) ON DELETE CASCADE` | Tenant owner |
+| `name` | `TEXT` | `NOT NULL` | Role name |
+| `description` | `TEXT` | | Role purpose description |
+| `permissions_json` | `JSONB` | `NOT NULL`, `DEFAULT '{}'` | Permission key-value map |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Date created |
 
 ---
 
-### 3. `restaurant_users` (Auth Mappings)
-Connects authenticated login users (`auth.users`) to specific tenant restaurants.
+### 3. `restaurant_users` (User Tenant Mappings)
+Maps `auth.users` to restaurants and assigns roles.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
-| `id` | `UUID` | `PRIMARY KEY` | User association ID |
-| `restaurant_id` | `UUID` | `NOT NULL`, `REFERENCES restaurants(id) ON DELETE CASCADE` | Scope to tenant |
-| `auth_user_id` | `UUID` | `NOT NULL`, `REFERENCES auth.users(id) ON DELETE CASCADE` | Link to auth system user |
-| `role_id` | `UUID` | `REFERENCES roles(id) ON DELETE SET NULL` | Assigned operations role |
-| `is_owner` | `BOOLEAN` | `NOT NULL`, `DEFAULT false` | Owner privileges flag |
-| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Association date |
-
-* **Indexes**:
-  * `idx_restaurant_users_restaurant_id` on `restaurant_id`.
-  * `idx_restaurant_users_auth_user_id` on `auth_user_id`.
-  * Unique constraint on `(restaurant_id, auth_user_id)` to prevent mapping a user multiple times to the same restaurant.
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Mapping ID |
+| `restaurant_id` | `UUID` | `NOT NULL`, `REFERENCES restaurants(id) ON DELETE CASCADE` | Scoped tenant |
+| `auth_user_id` | `UUID` | `NOT NULL` | Auth user ID |
+| `role_id` | `UUID` | `REFERENCES roles(id) ON DELETE SET NULL` | Assigned RBAC role |
+| `is_owner` | `BOOLEAN` | `NOT NULL`, `DEFAULT false` | Owner flag |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Date mapped |
 
 ---
 
-### 4. `branches` (Multiple Locations)
-Supports multi-unit franchises operating under a single restaurant tenant.
+### 4. `branches` (Multi-Location Outlets)
+Stores physical branch locations, operating hours, addresses, and geo-coordinates.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
@@ -113,13 +118,6 @@ Supports multi-unit franchises operating under a single restaurant tenant.
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Date added |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last updated |
 
-* **Indexes**:
-  * `idx_branches_restaurant_id` on `restaurant_id`.
-  * `idx_branches_is_active` on `is_active`.
-  * `idx_branches_is_default` on `is_default`.
-  * `idx_branches_is_archived` on `is_archived`.
-  * `idx_branches_branch_code` on `branch_code`.
-
 ---
 
 ### 5. `staff` (Operations Personnel)
@@ -134,14 +132,8 @@ Lists personnel employed at specific branches, linked to system roles.
 | `full_name` | `TEXT` | `NOT NULL` | Employee full name |
 | `phone` | `TEXT` | | Contact phone |
 | `email` | `TEXT` | | Contact email |
-| `status` | `TEXT` | `NOT NULL`, `DEFAULT 'active'`, `CHECK (active, inactive, suspended)` | Employment status |
+| `status` | `TEXT` | `NOT NULL`, `DEFAULT 'active'` | Employment status |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Hiring date |
-
-* **Indexes**:
-  * `idx_staff_restaurant_id` on `restaurant_id`.
-  * `idx_staff_branch_id` on `branch_id`.
-  * `idx_staff_role_id` on `role_id`.
-  * `idx_staff_status` on `status`.
 
 ---
 
@@ -174,8 +166,6 @@ Organizes menu items into structured groups (e.g. Appetizers, Main Course, Bever
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last edit timestamp |
 | `archived_at` | `TIMESTAMPTZ` | | Soft delete timestamp |
-
-* **Indexes**: `idx_menu_categories_restaurant_id`, `idx_menu_categories_branch_id`, `idx_menu_categories_sort_order`, `idx_menu_categories_is_featured`, `idx_menu_categories_archived_at`, `idx_menu_categories_slug`.
 
 ---
 
@@ -224,7 +214,35 @@ Stores menu items, pricing, dietary tags, operations data, and branch availabili
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last edit timestamp |
 | `archived_at` | `TIMESTAMPTZ` | | Soft delete timestamp |
 
-* **Indexes**: `idx_menu_items_restaurant_id`, `idx_menu_items_category_id`, `idx_menu_items_branch_id`, `idx_menu_items_slug`, `idx_menu_items_status`, `idx_menu_items_sort_order`, `idx_menu_items_is_featured`, `idx_menu_items_archived_at`, `idx_menu_items_sku`, `idx_menu_items_internal_code`.
+---
+
+### 8. `tables` (Dining Tables & Seating Layout)
+Stores physical dining tables, seating capacity, branch scoping, floor/section grouping, and placeholders for QR Code & active session tracking.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Table ID |
+| `restaurant_id` | `UUID` | `NOT NULL`, `REFERENCES restaurants(id) ON DELETE CASCADE` | Scoped tenant |
+| `branch_id` | `UUID` | `REFERENCES branches(id) ON DELETE SET NULL` | Scoped branch |
+| `table_number` | `TEXT` | `NOT NULL` | Unique table code/number per branch |
+| `label` | `TEXT` | | Display name (e.g. `Window Side Booth 1`) |
+| `seating_capacity` | `INTEGER` | `NOT NULL`, `DEFAULT 4` | Seating capacity |
+| `floor` | `TEXT` | | Floor/level (e.g. `Ground Floor`, `Rooftop`) |
+| `section` | `TEXT` | | Zone/section (e.g. `Main Dining`, `VIP Lounge`) |
+| `status` | `TEXT` | `NOT NULL`, `DEFAULT 'available'`, `CHECK (status IN ('available','occupied','reserved','cleaning','inactive'))` | Table operational status |
+| `is_active` | `BOOLEAN` | `NOT NULL`, `DEFAULT true` | Activity status toggle |
+| `is_occupied` | `BOOLEAN` | `NOT NULL`, `DEFAULT false` | Occupancy indicator |
+| `sort_order` | `INTEGER` | `NOT NULL`, `DEFAULT 1` | Sorting display order |
+| `qr_code_url` | `TEXT` | | Placeholder for generated QR code |
+| `current_session_id` | `TEXT` | | Placeholder for active customer session |
+| `current_order_id` | `TEXT` | | Placeholder for active order |
+| `created_by` | `UUID` | | User ID who created |
+| `updated_by` | `UUID` | | User ID who last updated |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Last edit timestamp |
+| `archived_at` | `TIMESTAMPTZ` | | Soft delete timestamp |
+
+* **Indexes**: `idx_tables_restaurant_id`, `idx_tables_branch_id`, `idx_tables_status`, `idx_tables_archived_at`, `idx_tables_floor`, `idx_tables_section`, `idx_tables_number_branch`.
 
 ---
 
@@ -233,16 +251,4 @@ Stores menu items, pricing, dietary tags, operations data, and branch availabili
 RLS is configured on all tables to ensure complete tenant isolation:
 - **Selects**: Any user mapped to a restaurant inside `restaurant_users` or staff can SELECT records matching that `restaurant_id`.
 - **Modifications (INSERT/UPDATE/DELETE)**: Only user records that are authenticated and mapped to the tenant can modify rows.
-- **Cross-tenant leaks**: All queries must pass through these constraints, making it impossible for Restaurant A to read or write Restaurant B's data.
-
----
-
-## Future Extension Points (Next Steps)
-
-This relational database foundation is designed to seamlessly integrate upcoming features:
-
-1. **Modifier Groups & Options**: Tables for item modifiers (e.g., Choice of Crust, Extra Cheese) linking to `menu_items`.
-2. **Seating Layouts**: A `tables` table will reference `branch_id`, automatically mapping dining layout codes to unique location endpoints.
-3. **Ordering Lifecycle**: The `orders` and `order_items` tables will link to `table_id`, `branch_id`, and `menu_items`, scoping kitchen tickets to physical branch KDS terminals.
-4. **Subscription Billing**: The `restaurants` table will reference subscription plans and billing cycles.
-
+- **Cross-tenant leaks**: All queries pass through `restaurant_id` constraints.

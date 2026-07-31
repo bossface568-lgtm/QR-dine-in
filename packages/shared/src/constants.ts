@@ -40,6 +40,7 @@ export const TABLE_STATUS_LABELS: Record<TableStatus, string> = {
   available: 'Available',
   occupied: 'Occupied',
   reserved: 'Reserved',
+  cleaning: 'Cleaning',
   inactive: 'Inactive',
 };
 
@@ -47,8 +48,31 @@ export const TABLE_STATUS_COLORS: Record<TableStatus, string> = {
   available: 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20',
   occupied: 'bg-orange-500/15 text-orange-500 border border-orange-500/20',
   reserved: 'bg-blue-500/15 text-blue-500 border border-blue-500/20',
+  cleaning: 'bg-amber-500/15 text-amber-500 border border-amber-500/20',
   inactive: 'bg-slate-500/15 text-slate-400 border border-slate-500/20',
 };
+
+export const FLOOR_OPTIONS = [
+  'Ground Floor',
+  'First Floor',
+  'Second Floor',
+  'Rooftop',
+  'Terrace',
+  'Outdoor Garden',
+  'Mezzanine',
+  'Basement',
+];
+
+export const SECTION_OPTIONS = [
+  'Main Dining',
+  'VIP Section',
+  'Bar & Lounge',
+  'Family Area',
+  'Patio',
+  'Garden Dining',
+  'Private Dining Room',
+  'Poolside',
+];
 
 export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
   owner: 'Owner',

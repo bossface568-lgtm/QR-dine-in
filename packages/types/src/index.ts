@@ -364,18 +364,50 @@ export interface UpdateMenuItemPayload extends Partial<CreateMenuItemPayload> {}
 
 export type MenuItemFilterType = 'all' | 'active' | 'inactive' | 'featured' | 'out_of_stock' | 'archived';
 
-export type TableStatus = 'available' | 'occupied' | 'reserved' | 'inactive';
+export type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning' | 'inactive';
 
 export interface Table {
   id: string;
   restaurant_id: string;
-  table_number: number;
+  branch_id: string | null;
+  table_number: string;
   label: string | null;
-  capacity: number;
-  qr_code_url: string | null;
+  seating_capacity: number;
+  floor: string | null;
+  section: string | null;
   status: TableStatus;
+  is_active: boolean;
+  is_occupied: boolean;
+  sort_order: number;
+  qr_code_url?: string | null;
+  current_session_id?: string | null;
+  current_order_id?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
   created_at: string;
+  updated_at: string;
+  archived_at?: string | null;
 }
+
+export interface TableWithBranch extends Table {
+  branch?: Branch;
+}
+
+export interface CreateTablePayload {
+  branch_id?: string | null;
+  table_number: string;
+  label?: string | null;
+  seating_capacity: number;
+  floor?: string | null;
+  section?: string | null;
+  status?: TableStatus;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface UpdateTablePayload extends Partial<CreateTablePayload> {}
+
+export type TableFilterType = 'all' | 'available' | 'occupied' | 'reserved' | 'cleaning' | 'inactive' | 'archived';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'cancelled';
 export type OrderItemStatus = 'pending' | 'preparing' | 'ready' | 'served';
