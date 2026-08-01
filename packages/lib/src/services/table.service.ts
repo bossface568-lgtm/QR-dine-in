@@ -329,18 +329,23 @@ export const tableService = {
   },
 
   /**
-   * Bulk permanently delete multiple tables
+   * Bulk permanently delete multiple tables in a single batch query
    */
   async bulkDelete(restaurantId: string, tableIds: string[]): Promise<ApiResponse<boolean>> {
     try {
-      let hasError = false;
-      for (const id of tableIds) {
-        const res = await this.deleteTable(restaurantId, id);
-        if (res.error) hasError = true;
-      }
-      return { data: !hasError, error: hasError ? { message: 'Some tables failed to permanently delete' } : null };
+      if (!tableIds || tableIds.length === 0) return { data: true, error: null };
+
+      const { error } = await insforge
+        .database
+        .from('tables')
+        .delete()
+        .eq('restaurant_id', restaurantId)
+        .in('id', tableIds);
+
+      if (error) throw error;
+      return { data: true, error: null };
     } catch (err: any) {
-      return { data: false, error: { message: err.message } };
+      return { data: false, error: { message: err.message || 'Failed to delete tables' } };
     }
   },
 
