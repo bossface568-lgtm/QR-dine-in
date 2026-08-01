@@ -72,7 +72,7 @@ export const CustomerMenuPage: React.FC = () => {
             setLoading(false);
             return;
           }
-          if (res.data.status !== 'active' && res.data.is_active === false) {
+          if (res.data.status !== 'active') {
             setErrorState('restaurant_unavailable');
             setLoading(false);
             return;
@@ -81,11 +81,14 @@ export const CustomerMenuPage: React.FC = () => {
         }
 
         // Fetch categories & menu items
-        const restId = restaurant?.id || (await restaurantService.getRestaurantBySlug(slug)).data?.id;
-        if (restId) {
+        const currentRest = tableToken 
+          ? (await tableService.getTableByToken(slug, tableToken)).data?.restaurant 
+          : (await restaurantService.getRestaurantBySlug(slug)).data;
+          
+        if (currentRest?.id) {
           const [catRes, itemsRes] = await Promise.all([
-            categoryService.getCategories(restId),
-            menuItemService.getMenuItems(restId),
+            categoryService.getCategories(currentRest.id),
+            menuItemService.getMenuItems(currentRest.id),
           ]);
           if (catRes.data) setCategories(catRes.data.filter((c) => c.is_visible && c.is_active));
           if (itemsRes.data) setMenuItems(itemsRes.data.filter((i) => i.status === 'available'));
