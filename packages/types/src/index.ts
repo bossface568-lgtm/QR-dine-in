@@ -555,3 +555,5 @@ export interface MediaUrls {
   srcset: string;
 }
 
+export * from './public-api.types';
+

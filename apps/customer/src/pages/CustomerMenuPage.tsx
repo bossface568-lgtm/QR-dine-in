@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { restaurantService, tableService, categoryService, menuItemService } from '@qrdine/lib';
-import { Restaurant, Branch, Table, Category, MenuItem } from '@qrdine/types';
+import { publicCustomerService } from '@qrdine/lib';
+import { PublicRestaurant, PublicBranch, PublicTable, PublicCategory, PublicMenuItem } from '@qrdine/types';
 import { formatCurrency } from '@qrdine/shared';
 import { Spinner } from '@qrdine/ui';
 import { RestaurantNotFoundPage } from './RestaurantNotFoundPage';
@@ -22,11 +22,11 @@ export const CustomerMenuPage: React.FC = () => {
   const { slug, tableToken } = useParams<{ slug: string; tableToken?: string }>();
 
   const [loading, setLoading] = useState<boolean>(true);
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [branch, setBranch] = useState<Branch | null>(null);
-  const [table, setTable] = useState<Table | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [restaurant, setRestaurant] = useState<PublicRestaurant | null>(null);
+  const [branch, setBranch] = useState<PublicBranch | null>(null);
+  const [table, setTable] = useState<PublicTable | null>(null);
+  const [categories, setCategories] = useState<PublicCategory[]>([]);
+  const [menuItems, setMenuItems] = useState<PublicMenuItem[]>([]);
   
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -43,56 +43,27 @@ export const CustomerMenuPage: React.FC = () => {
       setErrorState('none');
 
       try {
-        if (tableToken) {
-          // Resolve table token & restaurant together
-          const res = await tableService.getTableByToken(slug, tableToken);
-          if (res.error) {
-            if (res.error.code === 'RESTAURANT_NOT_FOUND') {
-              setErrorState('restaurant_404');
-            } else if (res.error.code === 'RESTAURANT_UNAVAILABLE') {
-              setErrorState('restaurant_unavailable');
-            } else {
-              setErrorState('table_invalid');
-              setErrorCode(res.error.code || 'INVALID_TABLE_TOKEN');
-              setErrorMessage(res.error.message || '');
-            }
-            setLoading(false);
-            return;
-          }
-          if (res.data) {
-            setRestaurant(res.data.restaurant);
-            setBranch(res.data.branch);
-            setTable(res.data.table);
-          }
-        } else {
-          // Resolve restaurant by slug only
-          const res = await restaurantService.getRestaurantBySlug(slug);
-          if (res.error || !res.data) {
+        const res = await publicCustomerService.getPublicFullMenu(slug, tableToken);
+        if (res.error || !res.data) {
+          const code = res.error?.code;
+          if (code === 'RESTAURANT_NOT_FOUND') {
             setErrorState('restaurant_404');
-            setLoading(false);
-            return;
-          }
-          if (res.data.status !== 'active') {
+          } else if (code === 'RESTAURANT_UNAVAILABLE') {
             setErrorState('restaurant_unavailable');
-            setLoading(false);
-            return;
+          } else {
+            setErrorState('table_invalid');
+            setErrorCode(code || 'INVALID_TABLE_TOKEN');
+            setErrorMessage(res.error?.message || 'Table token validation failed');
           }
-          setRestaurant(res.data);
+          setLoading(false);
+          return;
         }
 
-        // Fetch categories & menu items
-        const currentRest = tableToken 
-          ? (await tableService.getTableByToken(slug, tableToken)).data?.restaurant 
-          : (await restaurantService.getRestaurantBySlug(slug)).data;
-          
-        if (currentRest?.id) {
-          const [catRes, itemsRes] = await Promise.all([
-            categoryService.getCategories(currentRest.id),
-            menuItemService.getMenuItems(currentRest.id),
-          ]);
-          if (catRes.data) setCategories(catRes.data.filter((c) => c.is_visible && c.is_active));
-          if (itemsRes.data) setMenuItems(itemsRes.data.filter((i) => i.status === 'available'));
-        }
+        setRestaurant(res.data.restaurant);
+        setBranch(res.data.branch);
+        setTable(res.data.table);
+        setCategories(res.data.categories);
+        setMenuItems(res.data.items);
       } catch (err) {
         console.error('Error loading customer menu:', err);
         setErrorState('restaurant_404');
@@ -258,7 +229,7 @@ export const CustomerMenuPage: React.FC = () => {
                   <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{item.description}</p>
                 )}
                 <span className="text-sm font-extrabold text-orange-400 mt-1">
-                  {formatCurrency(item.base_price, restaurant?.currency)}
+                  {formatCurrency(item.price, restaurant?.currency)}
                 </span>
               </div>
 

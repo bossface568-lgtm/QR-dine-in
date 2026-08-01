@@ -395,8 +395,9 @@ Pull Request descriptions must include:
   - Table Management Module (Dining Tables CRUD, Branch Uniqueness Check, Seating Capacity, Floor & Section Grouping, Soft Deletion, Status Tracking, Bulk Actions, Operational Placeholders)
   - Public Restaurant URL & Table Token Foundation (`/r/:slug` and `/r/:slug/t/:tableToken` resolution, 7-char table tokens, Copy/Open URL actions, Customer routing & 404 validation pages)
   - QR Code Generation & Printable Sheets Module (Zero third-party APIs, Level H error correction, logo overlay, token regeneration, 4 printable templates [Table Tent, Premium Stand, Square Sticker, Acrylic Stand], PNG/SVG/PDF export, bulk print & expired token validation)
+  - Public Customer API Layer (Sanitized DTO types, public customer service, table token resolution & 6-stage validation, response sanitizers, batch menu payload, Customer App refactor & PUBLIC_API.md documentation)
 - **Current Development**:
-  - Modifier Groups & Variants Module
+  - Modifier Groups & Product Variants Module
 - **Upcoming Modules (Developer A)**:
   - Modifier Groups & Variants
   - QR Code Generation & Printable Sheets
