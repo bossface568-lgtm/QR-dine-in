@@ -310,6 +310,41 @@ export const tableService = {
   },
 
   /**
+   * Permanently delete a table from PostgreSQL database
+   */
+  async deleteTable(restaurantId: string, tableId: string): Promise<ApiResponse<boolean>> {
+    try {
+      const { error } = await insforge
+        .database
+        .from('tables')
+        .delete()
+        .eq('restaurant_id', restaurantId)
+        .eq('id', tableId);
+
+      if (error) throw error;
+      return { data: true, error: null };
+    } catch (err: any) {
+      return { data: false, error: { message: err.message || 'Failed to permanently delete table' } };
+    }
+  },
+
+  /**
+   * Bulk permanently delete multiple tables
+   */
+  async bulkDelete(restaurantId: string, tableIds: string[]): Promise<ApiResponse<boolean>> {
+    try {
+      let hasError = false;
+      for (const id of tableIds) {
+        const res = await this.deleteTable(restaurantId, id);
+        if (res.error) hasError = true;
+      }
+      return { data: !hasError, error: hasError ? { message: 'Some tables failed to permanently delete' } : null };
+    } catch (err: any) {
+      return { data: false, error: { message: err.message } };
+    }
+  },
+
+  /**
    * Restore an archived table
    */
   async restoreTable(restaurantId: string, tableId: string): Promise<ApiResponse<boolean>> {

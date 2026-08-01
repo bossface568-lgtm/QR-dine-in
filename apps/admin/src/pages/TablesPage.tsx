@@ -51,9 +51,11 @@ export const TablesPage: React.FC = () => {
     createTable,
     updateTable,
     archiveTable: hookArchiveTable,
+    deleteTable: hookDeleteTable,
     restoreTable,
     setStatus,
     bulkArchive,
+    bulkDelete,
     bulkSetStatus,
     toggleSelectAll,
     toggleSelectOne,
@@ -68,6 +70,9 @@ export const TablesPage: React.FC = () => {
   const [detailsTable, setDetailsTable] = useState<Table | null>(null);
   const [archiveTableState, setArchiveTableState] = useState<Table | null>(null);
   const [archiveLoading, setArchiveLoading] = useState(false);
+  const [deleteTableState, setDeleteTableState] = useState<Table | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   // Handlers
   const handleCreateSubmit = async (payload: CreateTablePayload | UpdateTablePayload) => {
@@ -89,6 +94,21 @@ export const TablesPage: React.FC = () => {
     const success = await hookArchiveTable(archiveTableState.id);
     setArchiveLoading(false);
     if (success) setArchiveTableState(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTableState) return;
+    setDeleteLoading(true);
+    const success = await hookDeleteTable(deleteTableState.id);
+    setDeleteLoading(false);
+    if (success) setDeleteTableState(null);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    setDeleteLoading(true);
+    const success = await bulkDelete();
+    setDeleteLoading(false);
+    if (success) setShowBulkDeleteConfirm(false);
   };
 
   const allFilteredSelected = filteredTables.length > 0 && filteredTables.every((t) => selectedIds.includes(t.id));
@@ -299,8 +319,11 @@ export const TablesPage: React.FC = () => {
             <Button size="sm" variant="ghost" onClick={() => bulkSetStatus('inactive')} className="text-xs text-slate-400 hover:text-slate-300">
               Set Inactive
             </Button>
-            <Button size="sm" variant="danger" onClick={bulkArchive} className="text-xs gap-1.5">
-              <Archive className="w-3.5 h-3.5" /> Archive Selected
+            <Button size="sm" variant="outline" onClick={bulkArchive} className="text-xs text-amber-400 border-amber-500/30 hover:bg-amber-500/10 gap-1.5">
+              <Archive className="w-3.5 h-3.5" /> Archive
+            </Button>
+            <Button size="sm" variant="danger" onClick={() => setShowBulkDeleteConfirm(true)} className="text-xs gap-1.5">
+              Delete Permanently
             </Button>
           </div>
         </div>
@@ -340,6 +363,7 @@ export const TablesPage: React.FC = () => {
               onDetails={() => setDetailsTable(t)}
               onArchive={() => setArchiveTableState(t)}
               onRestore={() => restoreTable(t.id)}
+              onDelete={() => setDeleteTableState(t)}
               onSetStatus={(status) => setStatus(t.id, status)}
               branches={branches}
               restaurantSlug={restaurant?.slug}
@@ -462,6 +486,9 @@ export const TablesPage: React.FC = () => {
                               Restore
                             </Button>
                           )}
+                          <Button size="sm" variant="ghost" onClick={() => setDeleteTableState(t)} className="text-rose-400 hover:text-rose-300">
+                            Delete
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -508,6 +535,11 @@ export const TablesPage: React.FC = () => {
             setDetailsTable(null);
             setArchiveTableState(tbl);
           }}
+          onDelete={() => {
+            const tbl = detailsTable;
+            setDetailsTable(null);
+            setDeleteTableState(tbl);
+          }}
           branches={branches}
           restaurantSlug={restaurant?.slug}
         />
@@ -522,18 +554,72 @@ export const TablesPage: React.FC = () => {
           size="sm"
         >
           <div className="flex flex-col gap-4 py-2">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <span>
-                Archiving <strong>{archiveTableState.label || archiveTableState.table_number}</strong> will remove it from active seating layout. Tables are never permanently deleted and can be restored anytime.
+                Archiving <strong>{archiveTableState.label || archiveTableState.table_number}</strong> will hide it from active lists. It can be restored anytime.
               </span>
             </div>
             <div className="flex justify-end gap-2 mt-2">
               <Button variant="ghost" onClick={() => setArchiveTableState(null)}>
                 Cancel
               </Button>
-              <Button variant="danger" isLoading={archiveLoading} onClick={handleConfirmArchive}>
+              <Button variant="outline" className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10" isLoading={archiveLoading} onClick={handleConfirmArchive}>
                 Confirm Archive
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Permanent Delete Confirmation Dialog */}
+      {deleteTableState && (
+        <Modal
+          isOpen={!!deleteTableState}
+          onClose={() => setDeleteTableState(null)}
+          title="Permanently Delete Table"
+          size="sm"
+        >
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <span>
+                Are you sure you want to permanently delete <strong>{deleteTableState.label || deleteTableState.table_number}</strong>? This will permanently remove the record from the database. This action cannot be undone.
+              </span>
+            </div>
+            <div className="flex justify-end gap-2 mt-2">
+              <Button variant="ghost" onClick={() => setDeleteTableState(null)}>
+                Cancel
+              </Button>
+              <Button variant="danger" isLoading={deleteLoading} onClick={handleConfirmDelete}>
+                Delete Permanently
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      {showBulkDeleteConfirm && (
+        <Modal
+          isOpen={showBulkDeleteConfirm}
+          onClose={() => setShowBulkDeleteConfirm(false)}
+          title="Bulk Delete Tables Permanently"
+          size="sm"
+        >
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <span>
+                Are you sure you want to permanently delete <strong>{selectedIds.length} tables</strong> from the database? This action is permanent and cannot be reversed.
+              </span>
+            </div>
+            <div className="flex justify-end gap-2 mt-2">
+              <Button variant="ghost" onClick={() => setShowBulkDeleteConfirm(false)}>
+                Cancel
+              </Button>
+              <Button variant="danger" isLoading={deleteLoading} onClick={handleConfirmBulkDelete}>
+                Delete {selectedIds.length} Tables
               </Button>
             </div>
           </div>

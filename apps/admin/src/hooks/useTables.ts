@@ -157,6 +157,22 @@ export function useTables() {
     }
   };
 
+  const deleteTable = async (id: string): Promise<boolean> => {
+    try {
+      if (!restaurant?.id) throw new Error('Authentication required');
+      const res = await tableService.deleteTable(restaurant.id, id);
+      if (res.error) throw new Error(res.error.message);
+      toast('Table deleted permanently from database', 'success');
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
+      await fetchTables();
+      return true;
+    } catch (error: any) {
+      console.error('Delete table error:', error);
+      toast(error.message || 'Failed to permanently delete table', 'error');
+      return false;
+    }
+  };
+
   const restoreTable = async (id: string): Promise<boolean> => {
     try {
       if (!restaurant?.id) throw new Error('Authentication required');
@@ -236,6 +252,23 @@ export function useTables() {
     }
   };
 
+  const bulkDelete = async (): Promise<boolean> => {
+    if (!selectedIds.length || !restaurant?.id) return false;
+    
+    try {
+      const res = await tableService.bulkDelete(restaurant.id, selectedIds);
+      if (res.error) throw new Error(res.error.message);
+      toast(`${selectedIds.length} tables permanently deleted`, 'success');
+      setSelectedIds([]);
+      await fetchTables();
+      return true;
+    } catch (error: any) {
+      console.error('Bulk delete error:', error);
+      toast(error.message || 'Failed to permanently delete tables', 'error');
+      return false;
+    }
+  };
+
   const regenerateQR = async (id: string): Promise<boolean> => {
     try {
       if (!restaurant?.id || !user?.id) throw new Error('Authentication required');
@@ -307,10 +340,12 @@ export function useTables() {
     createTable,
     updateTable,
     archiveTable,
+    deleteTable,
     restoreTable,
     setStatus,
     toggleActive,
     bulkArchive,
+    bulkDelete,
     bulkSetStatus,
     regenerateQR,
     updateQRStatus,

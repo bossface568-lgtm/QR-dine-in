@@ -27,6 +27,7 @@ interface TableDetailsModalProps {
   table: Table | null;
   onEdit: () => void;
   onArchive: () => void;
+  onDelete: () => void;
   branches?: Branch[];
   restaurantSlug?: string;
 }
@@ -37,6 +38,7 @@ export const TableDetailsModal: React.FC<TableDetailsModalProps> = ({
   table,
   onEdit,
   onArchive,
+  onDelete,
   branches = [],
   restaurantSlug = '',
 }) => {
@@ -223,10 +225,14 @@ export const TableDetailsModal: React.FC<TableDetailsModalProps> = ({
             </Button>
 
             {!table.archived_at && (
-              <Button variant="danger" onClick={onArchive} className="gap-1.5">
-                <Archive className="w-4 h-4" /> Archive Table
+              <Button variant="outline" onClick={onArchive} className="gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+                <Archive className="w-4 h-4" /> Archive
               </Button>
             )}
+
+            <Button variant="danger" onClick={onDelete} className="gap-1.5">
+              Delete Permanently
+            </Button>
           </div>
         </div>
       </div>

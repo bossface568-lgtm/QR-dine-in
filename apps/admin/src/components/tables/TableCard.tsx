@@ -30,6 +30,7 @@ interface TableCardProps {
   onDetails: () => void;
   onArchive: () => void;
   onRestore: () => void;
+  onDelete: () => void;
   onSetStatus: (status: TableStatus) => void;
   branches?: Branch[];
   restaurantSlug?: string;
@@ -43,6 +44,7 @@ export const TableCard: React.FC<TableCardProps> = ({
   onDetails,
   onArchive,
   onRestore,
+  onDelete,
   onSetStatus,
   branches = [],
   restaurantSlug = '',
@@ -197,14 +199,25 @@ export const TableCard: React.FC<TableCardProps> = ({
 
         <div className="flex items-center gap-1">
           {isArchived ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onRestore}
-              className="text-xs text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
-            >
-              <RefreshCw className="w-3.5 h-3.5 mr-1" /> Restore
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onRestore}
+                className="text-xs text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1" /> Restore
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onDelete}
+                className="text-xs text-rose-500 hover:text-rose-400 hover:bg-rose-500/10"
+                title="Permanently Delete Table"
+              >
+                Delete
+              </Button>
+            </>
           ) : (
             <>
               <Button size="sm" variant="ghost" onClick={onEdit} className="text-xs text-slate-300 hover:text-white">
@@ -214,9 +227,19 @@ export const TableCard: React.FC<TableCardProps> = ({
                 size="sm"
                 variant="ghost"
                 onClick={onArchive}
-                className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                className="text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                title="Archive Table"
               >
                 <Archive className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onDelete}
+                className="text-xs text-rose-500 hover:text-rose-400 hover:bg-rose-500/10"
+                title="Permanently Delete Table"
+              >
+                Delete
               </Button>
             </>
           )}
