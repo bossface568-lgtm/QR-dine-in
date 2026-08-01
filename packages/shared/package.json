@@ -5,7 +5,9 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@qrdine/types": "*"
+    "@qrdine/types": "*",
+    "jspdf": "^4.2.1",
+    "qrcode": "^1.5.4"
   },
   "scripts": {
     "build": "tsc",

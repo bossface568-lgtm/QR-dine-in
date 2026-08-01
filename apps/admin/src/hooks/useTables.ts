@@ -236,6 +236,36 @@ export function useTables() {
     }
   };
 
+  const regenerateQR = async (id: string): Promise<boolean> => {
+    try {
+      if (!restaurant?.id || !user?.id) throw new Error('Authentication required');
+      const res = await tableService.regenerateTableQRToken(restaurant.id, user.id, id);
+      if (res.error) throw new Error(res.error.message);
+      toast('QR Token regenerated successfully. Old QR codes are now invalid.', 'success');
+      await fetchTables();
+      return true;
+    } catch (error: any) {
+      console.error('Regenerate QR error:', error);
+      toast(error.message || 'Failed to regenerate QR token', 'error');
+      return false;
+    }
+  };
+
+  const updateQRStatus = async (id: string, status: 'active' | 'expired' | 'revoked'): Promise<boolean> => {
+    try {
+      if (!restaurant?.id) throw new Error('Authentication required');
+      const res = await tableService.updateQRStatus(restaurant.id, id, status);
+      if (res.error) throw new Error(res.error.message);
+      toast(`QR status set to ${status}`, 'success');
+      await fetchTables();
+      return true;
+    } catch (error: any) {
+      console.error('Update QR status error:', error);
+      toast(error.message || 'Failed to update QR status', 'error');
+      return false;
+    }
+  };
+
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedIds(filteredTables.map(t => t.id));
@@ -282,6 +312,8 @@ export function useTables() {
     toggleActive,
     bulkArchive,
     bulkSetStatus,
+    regenerateQR,
+    updateQRStatus,
     toggleSelectAll,
     toggleSelectOne
   };

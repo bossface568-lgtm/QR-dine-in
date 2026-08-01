@@ -120,6 +120,14 @@ export const tableService = {
         return { data: null, error: { message: 'Invalid table token', code: 'INVALID_TABLE_TOKEN' } };
       }
 
+      if (table.qr_status === 'expired') {
+        return { data: null, error: { message: 'This QR Code has expired. Please scan the updated QR code at your table.', code: 'EXPIRED_TABLE_TOKEN' } };
+      }
+
+      if (table.qr_status === 'revoked' || table.is_active === false) {
+        return { data: null, error: { message: 'This table QR Code is currently disabled.', code: 'REVOKED_TABLE_TOKEN' } };
+      }
+
       // 3. Optional: Fetch branch if assigned
       let branch: Branch | null = null;
       if (table.branch_id) {
@@ -399,6 +407,68 @@ export const tableService = {
       return { data: !hasError, error: hasError ? { message: 'Some tables failed to update status' } : null };
     } catch (err: any) {
       return { data: false, error: { message: err.message } };
+    }
+  },
+
+  /**
+   * Regenerate Table QR Token — Generates a fresh 7-character token, invalidates old token, and updates qr_version & qr_last_regenerated_at
+   */
+  async regenerateTableQRToken(restaurantId: string, userId: string, tableId: string): Promise<ApiResponse<Table>> {
+    try {
+      // 1. Fetch current table to increment qr_version
+      const existingRes = await this.getTable(restaurantId, tableId);
+      if (existingRes.error || !existingRes.data) {
+        return { data: null, error: { message: existingRes.error?.message || 'Table not found' } };
+      }
+
+      const currentTable = existingRes.data;
+      const newToken = generateTableToken();
+      const currentVersion = currentTable.qr_version || 1;
+
+      const updateRecord: Record<string, any> = {
+        table_token: newToken,
+        qr_version: currentVersion + 1,
+        qr_last_regenerated_at: new Date().toISOString(),
+        qr_status: 'active',
+        updated_by: userId,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await insforge
+        .database
+        .from('tables')
+        .update(updateRecord)
+        .eq('restaurant_id', restaurantId)
+        .eq('id', tableId)
+        .select();
+
+      if (error) throw error;
+      const updated = Array.isArray(data) ? data[0] : data;
+      return { data: updated, error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err.message || 'Failed to regenerate QR token' } };
+    }
+  },
+
+  /**
+   * Update QR Status (active, expired, revoked)
+   */
+  async updateQRStatus(restaurantId: string, tableId: string, status: 'active' | 'expired' | 'revoked'): Promise<ApiResponse<boolean>> {
+    try {
+      const { error } = await insforge
+        .database
+        .from('tables')
+        .update({
+          qr_status: status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('restaurant_id', restaurantId)
+        .eq('id', tableId);
+
+      if (error) throw error;
+      return { data: true, error: null };
+    } catch (err: any) {
+      return { data: false, error: { message: err.message || 'Failed to update QR status' } };
     }
   }
 };

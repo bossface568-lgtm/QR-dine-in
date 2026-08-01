@@ -8,6 +8,7 @@ export * from './services/staff.service';
 export * from './services/branch.service';
 export * from './services/realtime.service';
 export * from './services/category.service';
+export * from './services/qr.service';
 
 // Media Foundation
 export * from './media/storage-adapter';

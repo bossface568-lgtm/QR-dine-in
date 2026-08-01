@@ -366,6 +366,8 @@ export interface UpdateMenuItemPayload extends Partial<CreateMenuItemPayload> {}
 export type MenuItemFilterType = 'all' | 'active' | 'inactive' | 'featured' | 'out_of_stock' | 'archived';
 
 export type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning' | 'inactive';
+export type QRStatus = 'active' | 'expired' | 'revoked' | 'unregistered';
+export type QRPrintTemplate = 'tent' | 'stand' | 'sticker' | 'acrylic';
 
 export interface Table {
   id: string;
@@ -382,6 +384,10 @@ export interface Table {
   is_occupied: boolean;
   sort_order: number;
   qr_code_url?: string | null;
+  qr_generated_at?: string | null;
+  qr_last_regenerated_at?: string | null;
+  qr_version?: number;
+  qr_status?: QRStatus;
   current_session_id?: string | null;
   current_order_id?: string | null;
   created_by?: string | null;
@@ -414,9 +420,14 @@ export interface CreateTablePayload {
   is_active?: boolean;
 }
 
-export interface UpdateTablePayload extends Partial<CreateTablePayload> {}
+export interface UpdateTablePayload extends Partial<CreateTablePayload> {
+  qr_status?: QRStatus;
+  qr_version?: number;
+  qr_last_regenerated_at?: string | null;
+}
 
 export type TableFilterType = 'all' | 'available' | 'occupied' | 'reserved' | 'cleaning' | 'inactive' | 'archived';
+export type QRFilterType = 'all' | 'active' | 'expired' | 'revoked';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'cancelled';
 export type OrderItemStatus = 'pending' | 'preparing' | 'ready' | 'served';

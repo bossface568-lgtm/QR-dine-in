@@ -242,8 +242,20 @@ Developer B must **NEVER**:
 
 ### QR Code Generation & Scanning Rules
 
-- **QR Code Generation**: Belongs **ONLY** to Developer A (Admin Panel). Admin creates, configures, and generates QR Codes for tables/branches.
+- **QR Code Generation**: Belongs **ONLY** to Developer A (Admin Panel). Admin creates, configures, previews, downloads, regenerates, and prints QR Codes for tables/branches.
 - **Customer Application**: Scans QR, validates parameters, loads Restaurant, loads Branch, and creates Table Sessions. **Never generate QR codes inside Customer App.**
+
+#### QR Generation Architecture
+- **Zero Third-Party QR APIs & Zero Storage Overhead**: QR codes are generated 100% locally in-browser using the `qrcode` library. No external API calls, API keys, or cloud storage buckets are used for QR images.
+- **Dynamic On-Demand Generation**: Database stores only table URL metadata (`table_token`, `qr_version`, `qr_generated_at`, `qr_last_regenerated_at`, `qr_status`). PNG, SVG, and PDF images are rendered dynamically whenever the admin previews, downloads, or prints.
+- **High Error Correction (Level H)**: QR codes are rendered with Level H (30% error recovery capacity) to support clean center restaurant logo overlay without compromising 100% scannability.
+- **Token Regeneration Strategy**: Regenerating a table's QR generates a fresh 7-character uppercase `table_token`, increments `qr_version`, and invalidates the old token in PostgreSQL. Any customer scanning an old physical QR receives the `EXPIRED_TABLE_TOKEN` error page: *"This QR Code has expired. Please scan the updated QR code at your table."*
+- **4 Printable Templates**:
+  1. *Simple Table Tent* (Foldable A5 / A6 tent card design)
+  2. *Premium Table Stand* (Dark & Gold glassmorphism design)
+  3. *Square Sticker* (100mm x 100mm border sticker layout)
+  4. *Acrylic Stand Layout* (Clean portrait layout for clear acrylic frames)
+- **Multi-Format Export & Print**: Admin can preview, download PNG, SVG, or multi-table PDF sheets, and print directly via browser print.
 
 ---
 
@@ -382,6 +394,7 @@ Pull Request descriptions must include:
   - Menu Management Module (Items CRUD, Dietary Tags, Multi-Image Gallery, Pricing, Preparation Time, Availability Scheduling, Branch Visibility)
   - Table Management Module (Dining Tables CRUD, Branch Uniqueness Check, Seating Capacity, Floor & Section Grouping, Soft Deletion, Status Tracking, Bulk Actions, Operational Placeholders)
   - Public Restaurant URL & Table Token Foundation (`/r/:slug` and `/r/:slug/t/:tableToken` resolution, 7-char table tokens, Copy/Open URL actions, Customer routing & 404 validation pages)
+  - QR Code Generation & Printable Sheets Module (Zero third-party APIs, Level H error correction, logo overlay, token regeneration, 4 printable templates [Table Tent, Premium Stand, Square Sticker, Acrylic Stand], PNG/SVG/PDF export, bulk print & expired token validation)
 - **Current Development**:
   - Modifier Groups & Variants Module
 - **Upcoming Modules (Developer A)**:

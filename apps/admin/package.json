@@ -11,14 +11,16 @@
   },
   "dependencies": {
     "@insforge/sdk": "latest",
-    "@qrdine/types": "*",
     "@qrdine/lib": "*",
     "@qrdine/shared": "*",
+    "@qrdine/types": "*",
     "@qrdine/ui": "*",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.400.0",
+    "qrcode": "^1.5.4",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "react-router-dom": "^6.26.0",
-    "lucide-react": "^0.400.0"
+    "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",

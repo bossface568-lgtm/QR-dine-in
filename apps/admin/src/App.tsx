@@ -14,6 +14,7 @@ import { StaffPage } from './pages/StaffPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { CategoriesPage } from './pages/CategoriesPage';
+import { QRCodesPage } from './pages/QRCodesPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requireOnboarded?: boolean }> = ({ 
   children, 
@@ -81,6 +82,7 @@ export const App: React.FC = () => {
               <Route path="categories" element={<CategoriesPage />} />
               <Route path="menu" element={<MenuPage />} />
               <Route path="tables" element={<TablesPage />} />
+              <Route path="qr-codes" element={<QRCodesPage />} />
               <Route path="kitchen" element={<PlaceholderPage title="Kitchen Display System" description="Real-time order tickets console for kitchen operations" />} />
               <Route path="orders" element={<OrdersPage />} />
               <Route path="customers" element={<PlaceholderPage title="Customer Directory" description="Track dining history, profiles, and order preferences" />} />

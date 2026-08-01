@@ -33,6 +33,8 @@ export const CustomerMenuPage: React.FC = () => {
   const [vegOnly, setVegOnly] = useState<boolean>(false);
   
   const [errorState, setErrorState] = useState<'none' | 'restaurant_404' | 'table_invalid' | 'restaurant_unavailable'>('none');
+  const [errorCode, setErrorCode] = useState<string>('INVALID_TABLE_TOKEN');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     async function loadData() {
@@ -51,6 +53,8 @@ export const CustomerMenuPage: React.FC = () => {
               setErrorState('restaurant_unavailable');
             } else {
               setErrorState('table_invalid');
+              setErrorCode(res.error.code || 'INVALID_TABLE_TOKEN');
+              setErrorMessage(res.error.message || '');
             }
             setLoading(false);
             return;
@@ -115,7 +119,7 @@ export const CustomerMenuPage: React.FC = () => {
   }
 
   if (errorState === 'table_invalid') {
-    return <TableNotFoundPage restaurantName={restaurant?.name} />;
+    return <TableNotFoundPage restaurantName={restaurant?.name} code={errorCode} message={errorMessage} />;
   }
 
   const filteredItems = menuItems.filter((item) => {

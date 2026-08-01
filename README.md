@@ -104,8 +104,17 @@ c:\Users\Inayath shariff\Downloads\restaurant software\
 ### Real Data Policy
 This project **NEVER** uses mock data, demo arrays, or hardcoded fake restaurants. Every feature consumes the live InsForge backend API.
 
-### QR Code Generation Ownership
-QR code generation belongs **ONLY** to the Admin dashboard (Developer A). The Customer Application only scans QR codes, validates parameters, and initializes table sessions.
+### QR Code Generation Architecture
+- **Zero Third-Party QR APIs & Zero Storage Overhead**: QR codes are generated 100% locally in-browser using the open-source `qrcode` library. No external API calls, API keys, or cloud storage buckets are used for QR images.
+- **Dynamic On-Demand Generation**: Database stores only table URL metadata (`table_token`, `qr_version`, `qr_generated_at`, `qr_last_regenerated_at`, `qr_status`). PNG, SVG, and PDF images are rendered dynamically whenever the admin previews, downloads, or prints.
+- **High Error Correction (Level H)**: QR codes are rendered with Level H (30% error recovery capacity) to support clean center restaurant logo overlay without compromising 100% scannability.
+- **Token Regeneration Strategy**: Regenerating a table's QR generates a fresh 7-character uppercase `table_token`, increments `qr_version`, and invalidates the old token in PostgreSQL. Any customer scanning an old physical QR receives the `EXPIRED_TABLE_TOKEN` error page: *"This QR Code has expired. Please scan the updated QR code at your table."*
+- **4 Printable Templates**:
+  1. *Simple Table Tent* (Foldable A5 / A6 tent card design)
+  2. *Premium Table Stand* (Dark & Gold glassmorphism design)
+  3. *Square Sticker* (100mm x 100mm border sticker layout)
+  4. *Acrylic Stand Layout* (Clean portrait layout for clear acrylic frames)
+- **Multi-Format Export & Print**: Admin can preview, download PNG, SVG, or multi-table PDF sheets, and print directly via browser print.
 
 ### Shared Media Pipeline
 All image uploads must pass through `mediaService` in `@qrdine/lib`.
