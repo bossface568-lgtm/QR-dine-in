@@ -57,14 +57,29 @@ export function generateTableToken(): string {
   return token;
 }
 
+export function getCustomerBaseUrl(): string {
+  const envUrl =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_CUSTOMER_APP_URL) ||
+    (typeof process !== 'undefined' && (process as any).env?.VITE_CUSTOMER_APP_URL);
+  if (envUrl) return envUrl.replace(/\/+$/, '');
+
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    if (origin.includes(':3000')) {
+      return origin.replace(':3000', ':3001');
+    }
+    return origin;
+  }
+
+  return 'http://localhost:3001';
+}
+
 export function buildPublicRestaurantUrl(restaurantSlug: string): string {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
-  return `${base}/r/${restaurantSlug}`;
+  return `${getCustomerBaseUrl()}/r/${restaurantSlug}`;
 }
 
 export function buildPublicTableUrl(restaurantSlug: string, tableToken: string): string {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
-  return `${base}/r/${restaurantSlug}/t/${tableToken}`;
+  return `${getCustomerBaseUrl()}/r/${restaurantSlug}/t/${tableToken}`;
 }
 
 export function buildQRCodeUrl(restaurantSlug: string, tableToken: string): string {

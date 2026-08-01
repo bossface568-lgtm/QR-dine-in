@@ -1,7 +1,8 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from '@qrdine/ui';
+import { getCustomerBaseUrl } from '@qrdine/shared';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -48,12 +49,33 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requireOnboarded?: b
   return <>{children}</>;
 };
 
+const RedirectToCustomerApp: React.FC = () => {
+  const location = useLocation();
+  const customerBaseUrl = getCustomerBaseUrl();
+  const targetUrl = `${customerBaseUrl}${location.pathname}${location.search}`;
+
+  React.useEffect(() => {
+    window.location.href = targetUrl;
+  }, [targetUrl]);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-4" />
+      <h2 className="text-lg font-bold">Redirecting to Customer Menu...</h2>
+      <p className="text-xs text-slate-400 mt-1 font-mono">{targetUrl}</p>
+    </div>
+  );
+};
+
 export const App: React.FC = () => {
   return (
     <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            {/* Public Customer Route Redirects */}
+            <Route path="/r/*" element={<RedirectToCustomerApp />} />
+
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
 
