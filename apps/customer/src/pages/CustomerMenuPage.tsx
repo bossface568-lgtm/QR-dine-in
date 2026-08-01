@@ -44,9 +44,8 @@ export const CustomerMenuPage: React.FC = () => {
 
       try {
         if (tableToken) {
-          console.log('[CustomerMenuPage] Fetching table by token:', { slug, tableToken });
+          // Resolve table token & restaurant together
           const res = await tableService.getTableByToken(slug, tableToken);
-          console.log('[CustomerMenuPage] getTableByToken result:', res);
           if (res.error) {
             if (res.error.code === 'RESTAURANT_NOT_FOUND') {
               setErrorState('restaurant_404');
@@ -66,17 +65,14 @@ export const CustomerMenuPage: React.FC = () => {
             setTable(res.data.table);
           }
         } else {
-          console.log('[CustomerMenuPage] Fetching restaurant by slug:', slug);
+          // Resolve restaurant by slug only
           const res = await restaurantService.getRestaurantBySlug(slug);
-          console.log('[CustomerMenuPage] getRestaurantBySlug result:', res);
           if (res.error || !res.data) {
-            console.error('[CustomerMenuPage] Restaurant 404 error:', res.error);
             setErrorState('restaurant_404');
             setLoading(false);
             return;
           }
           if (res.data.status !== 'active') {
-            console.warn('[CustomerMenuPage] Restaurant status unavailable:', res.data.status);
             setErrorState('restaurant_unavailable');
             setLoading(false);
             return;

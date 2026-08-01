@@ -46,21 +46,15 @@ export const restaurantService = {
 
   async getRestaurantBySlug(slug: string): Promise<ApiResponse<Restaurant>> {
     try {
-      console.log('[restaurantService] Querying restaurants for slug:', slug);
       const { data, error } = await insforge.database
         .from('restaurants')
         .select('*')
         .eq('slug', slug)
         .limit(1);
 
-      if (error) {
-        console.error('[restaurantService] Query error:', error);
-        throw error;
-      }
-      console.log('[restaurantService] Query returned data length:', data?.length);
+      if (error) throw error;
       return { data: data && data.length > 0 ? data[0] : null, error: null };
     } catch (err: any) {
-      console.error('[restaurantService] Catch error:', err);
       return { data: null, error: { message: err.message || 'Failed to fetch restaurant by slug' } };
     }
   },
